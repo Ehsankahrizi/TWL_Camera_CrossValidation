@@ -1,0 +1,186 @@
+{
+  "event_id": "20260924T23Z_HTF1091_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1091,
+  "lat": 35.104302,
+  "lon": -75.989848,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.8338,
+  "threshold_m_mhhw": 0.558942,
+  "htf_range_m": "(0.549114849, 0.568787994)",
+  "nwm_stations": [
+    {
+      "id": "OCAN7",
+      "distance_km": 1.245
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T23:00:00Z",
+    "end": "2026-09-24T23:00:00Z",
+    "capture_start": "2026-09-24T22:30:00Z",
+    "capture_end": "2026-09-24T23:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.845,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 1,
+      "margin_ft": 0.011,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.418
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.287
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.189
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.156
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.156
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.189
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 1.32
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.484
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.648
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.779
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.845
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.779
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.582
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.451
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.353
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.32
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.287
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.254
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "NC-cam-5366",
+      "name": "CCTV01-AVIATION-W95-1",
+      "lat": 35.10434,
+      "lon": -75.96248,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "Airport",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5366",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5366",
+      "distance_km": 2.49
+    },
+    {
+      "source": "traffic",
+      "id": "NC-cam-5367",
+      "name": "CCTV01-AVIATION-W95-2",
+      "lat": 35.10479,
+      "lon": -75.96133,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "Airport",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5367",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5367",
+      "distance_km": 2.595
+    },
+    {
+      "source": "windy",
+      "id": "1723831784",
+      "name": "Ocracoke \u203a West: Teaches Hole Channel",
+      "lat": 35.10637,
+      "lon": -75.98835,
+      "distance_km": 0.267,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1723831784",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1723831784/day"
+    },
+    {
+      "source": "windy",
+      "id": "1793911962",
+      "name": "Ocracoke \u203a North-west: Silver Lake Harbor",
+      "lat": 35.11035,
+      "lon": -75.98371,
+      "distance_km": 0.874,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1793911962",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1793911962/day"
+    },
+    {
+      "source": "windy",
+      "id": "1604167740",
+      "name": "Hyde County \u203a North: Ocracoke Harbor Inn",
+      "lat": 35.11081,
+      "lon": -75.98369,
+      "distance_km": 0.915,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1604167740",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1604167740/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

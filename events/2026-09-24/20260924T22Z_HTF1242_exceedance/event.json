@@ -1,0 +1,133 @@
+{
+  "event_id": "20260924T22Z_HTF1242_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1242,
+  "lat": 40.143004,
+  "lon": -74.023308,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.835,
+  "threshold_m_mhhw": 0.559308,
+  "htf_range_m": "(0.535494661, 0.583123399)",
+  "nwm_stations": [
+    {
+      "id": "MSNN4",
+      "distance_km": 3.912
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-24T23:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-24T23:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.989,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 2,
+      "margin_ft": 0.154,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 0.382
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -0.406
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -1.095
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -1.619
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -1.751
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -1.291
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -0.504
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.447
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.333
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.891
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.989
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.464
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 0.611
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -0.307
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": -1.16
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -1.784
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -2.013
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -1.685
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "usgs",
+      "id": "NJ_Shark_River_at_Belmar",
+      "name": "Shark River at Belmar",
+      "lat": 40.18555556,
+      "lon": -74.0261111,
+      "distance_km": 4.738,
+      "provider": "USGS HIVIS",
+      "archive": true,
+      "image_dir": "https://usgs-nims-images.s3.amazonaws.com/720/NJ_Shark_River_at_Belmar/",
+      "nwis_id": "01407770",
+      "page_url": "https://apps.usgs.gov/hivis/camera/NJ_Shark_River_at_Belmar"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": true,
+    "backfill_done": false
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

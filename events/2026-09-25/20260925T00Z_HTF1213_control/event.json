@@ -1,0 +1,231 @@
+{
+  "event_id": "20260925T00Z_HTF1213_control",
+  "kind": "control",
+  "htf_id": 1213,
+  "lat": 38.63208,
+  "lon": -75.065173,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.6262,
+  "threshold_m_mhhw": 0.495666,
+  "htf_range_m": "(0.488482273, 0.502854048)",
+  "nwm_stations": [
+    {
+      "id": "INRD1",
+      "distance_km": 2.501
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T23:00:00Z",
+    "capture_end": "2026-09-25T01:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.604,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.022,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.177
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.718
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 0.193
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -0.233
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -0.496
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -0.43
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -0.135
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.39
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.915
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.309
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.571
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.604
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.473
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.079
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.488
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -0.069
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -0.43
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -0.463
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "DE-cam-SCAM098",
+      "name": "DE 1 @ INDIAN RIVER BRIDGE INLET - NORTH",
+      "lat": 38.6154,
+      "lon": -75.0658,
+      "provider": "511 \u00b7 DE",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": null,
+      "video_url": "https://video.deldot.gov:443/live/SCAM098.stream/playlist.m3u8",
+      "page_url": "https://map.road511.com/",
+      "distance_km": 1.856
+    },
+    {
+      "source": "traffic",
+      "id": "DE-cam-SCAM170",
+      "name": "DE 1 @ IRIB NORTH PYLON TOP",
+      "lat": 38.608814,
+      "lon": -75.063883,
+      "provider": "511 \u00b7 DE",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": null,
+      "video_url": "https://video.deldot.gov:443/live/SCAM170.stream/playlist.m3u8",
+      "page_url": "https://map.road511.com/",
+      "distance_km": 2.589
+    },
+    {
+      "source": "traffic",
+      "id": "DE-cam-SCAM169",
+      "name": "DE 1 @ IRIB SOUTH PYLON TOP",
+      "lat": 38.607766,
+      "lon": -75.06355,
+      "provider": "511 \u00b7 DE",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": null,
+      "video_url": "https://video.deldot.gov:443/live/SCAM169.stream/playlist.m3u8",
+      "page_url": "https://map.road511.com/",
+      "distance_km": 2.707
+    },
+    {
+      "source": "traffic",
+      "id": "DE-cam-PCAM4061",
+      "name": "DE 1 @ Access Road B",
+      "lat": 38.60195,
+      "lon": -75.063,
+      "provider": "511 \u00b7 DE",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": null,
+      "video_url": "https://video.deldot.gov:443/live/PCAM4061.stream/playlist.m3u8",
+      "page_url": "https://map.road511.com/",
+      "distance_km": 3.356
+    },
+    {
+      "source": "traffic",
+      "id": "DE-cam-SCAM099",
+      "name": "DE 1 @ INDIAN RIVER BRIDGE INLET - SOUTH",
+      "lat": 38.6015,
+      "lon": -75.062,
+      "provider": "511 \u00b7 DE",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": null,
+      "video_url": "https://video.deldot.gov:443/live/SCAM099.stream/playlist.m3u8",
+      "page_url": "https://map.road511.com/",
+      "distance_km": 3.411
+    },
+    {
+      "source": "windy",
+      "id": "1666643757",
+      "name": "Pot-Nets Seaside: DE 1 @ INDIAN RIVER BRIDGE INLET - NORTH",
+      "lat": 38.6154,
+      "lon": -75.0658,
+      "distance_km": 1.856,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1666643757",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1666643757/day"
+    },
+    {
+      "source": "windy",
+      "id": "1667243478",
+      "name": "Bayside Hamlet: DE 1 @ IRIB SOUTH PYLON TOP",
+      "lat": 38.60777,
+      "lon": -75.06355,
+      "distance_km": 2.707,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1667243478",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1667243478/day"
+    },
+    {
+      "source": "windy",
+      "id": "1669056230",
+      "name": "Newark: DE 1 @ Access Road B",
+      "lat": 38.60194,
+      "lon": -75.06301,
+      "distance_km": 3.357,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1669056230",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1669056230/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

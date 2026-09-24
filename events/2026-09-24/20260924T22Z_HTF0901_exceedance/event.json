@@ -1,0 +1,159 @@
+{
+  "event_id": "20260924T22Z_HTF0901_exceedance",
+  "kind": "exceedance",
+  "htf_id": 901,
+  "lat": 34.20907179,
+  "lon": -77.78177696,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.6518,
+  "threshold_m_mhhw": 0.503469,
+  "htf_range_m": "(0.486674422, 0.520274249)",
+  "nwm_stations": [
+    {
+      "id": "JMPN7",
+      "distance_km": 1.22
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-24T23:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-24T23:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.974,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 2,
+      "margin_ft": 0.322,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 0.038
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -0.716
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -1.373
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -1.766
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -1.734
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -1.307
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -0.487
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.465
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.383
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.875
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.974
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.416
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 0.497
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -0.421
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": -1.176
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -1.701
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -1.766
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -1.537
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "NC-cam-4760",
+      "name": "WLM 14 US-76@ALLENS",
+      "lat": 34.22445,
+      "lon": -77.83001,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "US-76",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/4760",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/4760",
+      "distance_km": 4.753
+    },
+    {
+      "source": "windy",
+      "id": "1651853027",
+      "name": "Wrightsville Beach \u203a South-east: Carolina Yacht Club",
+      "lat": 34.2011,
+      "lon": -77.80007,
+      "distance_km": 1.902,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1651853027",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1651853027/day"
+    },
+    {
+      "source": "windy",
+      "id": "1651853166",
+      "name": "Wrightsville Beach \u203a North-west: Carolina Yacht Club",
+      "lat": 34.20155,
+      "lon": -77.80126,
+      "distance_km": 1.977,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1651853166",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1651853166/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

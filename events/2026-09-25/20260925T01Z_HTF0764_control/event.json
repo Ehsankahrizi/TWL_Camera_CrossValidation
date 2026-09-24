@@ -1,0 +1,235 @@
+{
+  "event_id": "20260925T01Z_HTF0764_control",
+  "kind": "control",
+  "htf_id": 764,
+  "lat": 30.38740769,
+  "lon": -81.55505761,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.6285,
+  "threshold_m_mhhw": 0.496367,
+  "htf_range_m": "(0.490463085, 0.502289624)",
+  "nwm_stations": [
+    {
+      "id": "DMSF1",
+      "distance_km": 0.324
+    },
+    {
+      "id": "DPBF1",
+      "distance_km": 0.337
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T01:00:00Z",
+    "end": "2026-09-25T01:00:00Z",
+    "capture_start": "2026-09-25T00:00:00Z",
+    "capture_end": "2026-09-25T02:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.248,
+      "peak_time": "2026-09-25T01:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.38,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 0.767
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.505
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -0.118
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -0.742
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -1.201
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -1.464
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -1.529
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": -1.168
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": -0.458
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 0.177
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 0.658
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.019
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.248
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.183
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.571
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -0.184
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -0.84
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -1.267
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "FL-cam-1510",
+      "name": "2059_I295E_43.5_Dames Point A",
+      "lat": 30.386462,
+      "lon": -81.558079,
+      "provider": "511 \u00b7 FL",
+      "road": "I-295 E",
+      "direction": "Southbound",
+      "archive": false,
+      "image_url": "https://fl511.com/map/Cctv/1510",
+      "video_url": null,
+      "page_url": "https://fl511.com/map/Cctv/1510",
+      "distance_km": 0.308
+    },
+    {
+      "source": "traffic",
+      "id": "FL-cam-1511",
+      "name": "2060_I295E_43.5_JaxPort",
+      "lat": 30.38524,
+      "lon": -81.55735,
+      "provider": "511 \u00b7 FL",
+      "road": "I-295 E",
+      "direction": "Southbound",
+      "archive": false,
+      "image_url": "https://fl511.com/map/Cctv/1511",
+      "video_url": null,
+      "page_url": "https://fl511.com/map/Cctv/1511",
+      "distance_km": 0.326
+    },
+    {
+      "source": "traffic",
+      "id": "FL-cam-1456",
+      "name": "2061_I295E_43.7_Dames Point B",
+      "lat": 30.383352,
+      "lon": -81.556255,
+      "provider": "511 \u00b7 FL",
+      "road": "I-295 E",
+      "direction": "Southbound",
+      "archive": false,
+      "image_url": "https://fl511.com/map/Cctv/1456",
+      "video_url": null,
+      "page_url": "https://fl511.com/map/Cctv/1456",
+      "distance_km": 0.465
+    },
+    {
+      "source": "traffic",
+      "id": "FL-cam-1509",
+      "name": "2058_I295E_42.7_N Dames Point",
+      "lat": 30.396302,
+      "lon": -81.562293,
+      "provider": "511 \u00b7 FL",
+      "road": "I-295 E",
+      "direction": "Southbound",
+      "archive": false,
+      "image_url": "https://fl511.com/map/Cctv/1509",
+      "video_url": null,
+      "page_url": "https://fl511.com/map/Cctv/1509",
+      "distance_km": 1.208
+    },
+    {
+      "source": "traffic",
+      "id": "FL-cam-1508",
+      "name": "2057_I295E_42.5_S Heckscher",
+      "lat": 30.402866,
+      "lon": -81.564753,
+      "provider": "511 \u00b7 FL",
+      "road": "I-295 E",
+      "direction": "Southbound",
+      "archive": false,
+      "image_url": "https://fl511.com/map/Cctv/1508",
+      "video_url": null,
+      "page_url": "https://fl511.com/map/Cctv/1508",
+      "distance_km": 1.954
+    },
+    {
+      "source": "windy",
+      "id": "1736341139",
+      "name": "Jacksonville",
+      "lat": 30.38646,
+      "lon": -81.55808,
+      "distance_km": 0.308,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1736341139",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1736341139/day"
+    },
+    {
+      "source": "windy",
+      "id": "1736341142",
+      "name": "Jacksonville",
+      "lat": 30.38524,
+      "lon": -81.55735,
+      "distance_km": 0.326,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1736341142",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1736341142/day"
+    },
+    {
+      "source": "windy",
+      "id": "1736340873",
+      "name": "Jacksonville",
+      "lat": 30.38335,
+      "lon": -81.55625,
+      "distance_km": 0.465,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1736340873",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1736340873/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

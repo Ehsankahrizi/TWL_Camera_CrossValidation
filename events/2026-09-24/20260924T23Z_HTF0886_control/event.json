@@ -1,0 +1,186 @@
+{
+  "event_id": "20260924T23Z_HTF0886_control",
+  "kind": "control",
+  "htf_id": 886,
+  "lat": 33.659118,
+  "lon": -78.915706,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.2665,
+  "threshold_m_mhhw": 0.386029,
+  "htf_range_m": "(0.364042283, 0.40804622)",
+  "nwm_stations": [
+    {
+      "id": "MROS1",
+      "distance_km": 0.517
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T23:00:00Z",
+    "end": "2026-09-24T23:00:00Z",
+    "capture_start": "2026-09-24T22:00:00Z",
+    "capture_end": "2026-09-25T00:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.065,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.202,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": -1.362
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -2.248
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -3.101
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -3.593
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -3.56
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -3.101
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -2.281
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": -1.067
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.114
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 0.901
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.065
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 0.606
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": -0.345
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -1.592
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": -2.707
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -3.462
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -3.692
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -3.167
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "SC-cam-4aac3d71-690e-11e7-8996-0123456789ab",
+      "name": "US 17 By-Pass N @ Palmetto Point",
+      "lat": 33.674303,
+      "lon": -78.966417,
+      "provider": "511 \u00b7 SC",
+      "road": "US 17",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://scdotsnap.us-east-1.skyvdn.com/thumbs/50031.flv.png",
+      "video_url": "https://s19.us-east-1.skyvdn.com/rtplive/50031/playlist.m3u8",
+      "page_url": "https://scdotsnap.us-east-1.skyvdn.com/thumbs/50031.flv.png",
+      "distance_km": 4.988
+    },
+    {
+      "source": "traffic",
+      "id": "SC-cam-e723c42f-d2a0-11e6-8996-0123456789ab",
+      "name": "US 17 S @ SC 707 (Backgate)",
+      "lat": 33.684439,
+      "lon": -78.960341,
+      "provider": "511 \u00b7 SC",
+      "road": "US 17",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://scdotsnap.us-east-1.skyvdn.com/thumbs/50009.flv.png",
+      "video_url": "https://s19.us-east-1.skyvdn.com/rtplive/50009/playlist.m3u8",
+      "page_url": "https://scdotsnap.us-east-1.skyvdn.com/thumbs/50009.flv.png",
+      "distance_km": 4.999
+    },
+    {
+      "source": "windy",
+      "id": "1793899330",
+      "name": "Myrtle Beach \u203a East: Bar Harbor, Myrtle Beach, South Carolina",
+      "lat": 33.68283,
+      "lon": -78.88751,
+      "distance_km": 3.709,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1793899330",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1793899330/day"
+    },
+    {
+      "source": "windy",
+      "id": "1748512633",
+      "name": "Surfside Beach: Lakewood Camping Resort",
+      "lat": 33.63028,
+      "lon": -78.94833,
+      "distance_km": 4.405,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1748512633",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1748512633/day"
+    },
+    {
+      "source": "windy",
+      "id": "1756151942",
+      "name": "Myrtle Beach: Courtyard Myrtle Beach Oceanfront",
+      "lat": 33.69565,
+      "lon": -78.89004,
+      "distance_km": 4.705,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1756151942",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1756151942/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

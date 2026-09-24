@@ -1,0 +1,231 @@
+{
+  "event_id": "20260924T22Z_HTF1071_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1071,
+  "lat": 36.913022,
+  "lon": -76.109377,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.713,
+  "threshold_m_mhhw": 0.522122,
+  "htf_range_m": "(0.5089786, 0.535269761)",
+  "nwm_stations": [
+    {
+      "id": "LHNV2",
+      "distance_km": 2.142
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-25T02:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-25T02:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.487,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 5,
+      "margin_ft": 0.774,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.897
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.47
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 0.978
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 0.552
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 0.289
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 0.322
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.584
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.109
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.7
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 2.159
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.422
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.487
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 2.192
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.733
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.175
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 0.683
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 0.322
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 0.256
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "VA-cam-2853",
+      "name": "vabeachcam013",
+      "lat": 36.9078,
+      "lon": -76.0968,
+      "provider": "511 \u00b7 VA",
+      "road": "US-60",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam013.flv.png",
+      "video_url": "https://media-sfs6.vdotcameras.com/rtplive/vabeachcam013/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam013.flv.png",
+      "distance_km": 1.26
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-2852",
+      "name": "vabeachcam014",
+      "lat": 36.9042,
+      "lon": -76.1271,
+      "provider": "511 \u00b7 VA",
+      "road": "US-60",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam014.flv.png",
+      "video_url": "https://media-sfs6.vdotcameras.com/rtplive/vabeachcam014/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam014.flv.png",
+      "distance_km": 1.856
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-2903",
+      "name": "vabeachcam015",
+      "lat": 36.9074,
+      "lon": -76.0865,
+      "provider": "511 \u00b7 VA",
+      "road": "US-60",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam015.flv.png",
+      "video_url": "https://media-sfs7.vdotcameras.com/rtplive/vabeachcam015/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam015.flv.png",
+      "distance_km": 2.128
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-2765",
+      "name": "vabeachcam054",
+      "lat": 36.8786,
+      "lon": -76.1333,
+      "provider": "511 \u00b7 VA",
+      "road": "Independence Blvd",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam054.flv.png",
+      "video_url": "https://media-sfs3.vdotcameras.com/rtplive/vabeachcam054/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam054.flv.png",
+      "distance_km": 4.379
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-2835",
+      "name": "vabeachcam012",
+      "lat": 36.8753,
+      "lon": -76.1345,
+      "provider": "511 \u00b7 VA",
+      "road": "Independence Blvd",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam012.flv.png",
+      "video_url": "https://media-sfs5.vdotcameras.com/rtplive/vabeachcam012/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/vabeachcam012.flv.png",
+      "distance_km": 4.752
+    },
+    {
+      "source": "windy",
+      "id": "1744111302",
+      "name": "Ocean Park: US-60 and E Stratford Rd",
+      "lat": 36.9078,
+      "lon": -76.0968,
+      "distance_km": 1.26,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744111302",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744111302/day"
+    },
+    {
+      "source": "windy",
+      "id": "1744111299",
+      "name": "Bayside: US-60/ Shore Dr and Greenwell Rd",
+      "lat": 36.9042,
+      "lon": -76.1271,
+      "distance_km": 1.856,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744111299",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744111299/day"
+    },
+    {
+      "source": "windy",
+      "id": "1744108178",
+      "name": "Lynnhaven Shores: US-60 and Page Ave",
+      "lat": 36.9074,
+      "lon": -76.0865,
+      "distance_km": 2.128,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744108178",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744108178/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

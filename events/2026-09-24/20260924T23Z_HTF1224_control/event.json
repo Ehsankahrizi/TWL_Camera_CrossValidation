@@ -1,0 +1,133 @@
+{
+  "event_id": "20260924T23Z_HTF1224_control",
+  "kind": "control",
+  "htf_id": 1224,
+  "lat": 39.318628,
+  "lon": -74.511076,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7608,
+  "threshold_m_mhhw": 0.536692,
+  "htf_range_m": "(0.521270249, 0.552109643)",
+  "nwm_stations": [
+    {
+      "id": "MGTN4",
+      "distance_km": 2.107
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T23:00:00Z",
+    "end": "2026-09-24T23:00:00Z",
+    "capture_start": "2026-09-24T22:00:00Z",
+    "capture_end": "2026-09-25T00:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.135,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.626,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": -0.079
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -0.735
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -1.326
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -1.818
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -2.08
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -1.884
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -1.293
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": -0.473
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.315
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 0.872
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.135
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.004
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 0.413
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -0.309
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": -1.096
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -1.687
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -2.048
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -2.048
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "usgs",
+      "id": "NJ_Beach_Thorofare_at_Margate",
+      "name": "Beach Thorofare at Margate",
+      "lat": 39.3375,
+      "lon": -74.5130556,
+      "distance_km": 2.105,
+      "provider": "USGS HIVIS",
+      "archive": true,
+      "image_dir": "https://usgs-nims-images.s3.amazonaws.com/720/NJ_Beach_Thorofare_at_Margate/",
+      "nwis_id": "01411330",
+      "page_url": "https://apps.usgs.gov/hivis/camera/NJ_Beach_Thorofare_at_Margate"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": true,
+    "backfill_done": false
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

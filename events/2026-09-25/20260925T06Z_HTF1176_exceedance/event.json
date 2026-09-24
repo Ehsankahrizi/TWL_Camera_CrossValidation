@@ -1,0 +1,135 @@
+{
+  "event_id": "20260925T06Z_HTF1176_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1176,
+  "lat": 35.244973,
+  "lon": -75.52456,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.723,
+  "threshold_m_mhhw": 0.52517,
+  "htf_range_m": "(0.513042697, 0.537305207)",
+  "nwm_stations": [
+    {
+      "id": "FESN7",
+      "distance_km": 2.528
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T06:00:00Z",
+    "end": "2026-09-25T06:00:00Z",
+    "capture_start": "2026-09-25T05:30:00Z",
+    "capture_end": "2026-09-25T06:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.744,
+      "peak_time": "2026-09-25T06:00:00Z",
+      "hours_at_or_above": 1,
+      "margin_ft": 0.021,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.317
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.251
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.153
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.153
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.12
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.12
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 1.186
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.219
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.284
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.448
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.514
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.645
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.744
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.711
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.744
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.711
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.645
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.744
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "NC-cam-5363",
+      "name": "CCTV01-NC12-62S_BUXTON",
+      "lat": 35.26781,
+      "lon": -75.51904,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "NC-12",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5363",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5363",
+      "distance_km": 2.588
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "event_id": "20260924T22Z_HTF1150_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1150,
+  "lat": 35.21306109,
+  "lon": -75.71077937,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.8916,
+  "threshold_m_mhhw": 0.57656,
+  "htf_range_m": "(0.56411583, 0.589000361)",
+  "nwm_stations": [
+    {
+      "id": "HCGN7",
+      "distance_km": 0.903
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-25T00:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.042,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 3,
+      "margin_ft": 0.15,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.517
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.385
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.32
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.32
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.221
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.254
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 1.385
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.549
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.779
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.943
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.042
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.009
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.845
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.681
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.648
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.681
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.582
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.615
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "NC-cam-6085",
+      "name": "CCTV01-HATTERAS-FERRY",
+      "lat": 35.20755,
+      "lon": -75.70244,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "NC-12",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/6085",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/6085",
+      "distance_km": 0.974
+    },
+    {
+      "source": "traffic",
+      "id": "NC-cam-6083",
+      "name": "CCTV01-NC12-72.5N_HATTFRY_N",
+      "lat": 35.20713,
+      "lon": -75.70213,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "NC-12",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/6083",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/6083",
+      "distance_km": 1.026
+    },
+    {
+      "source": "traffic",
+      "id": "NC-cam-5360",
+      "name": "CCTV01-NC12-69.5S_HATTERASVIL",
+      "lat": 35.22072,
+      "lon": -75.65704,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "NC-12",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5360",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5360",
+      "distance_km": 4.956
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "event_id": "20260925T05Z_HTF0309_exceedance",
+  "kind": "exceedance",
+  "htf_id": 309,
+  "lat": 37.99,
+  "lon": -122.99,
+  "time_zone": "America/Los_Angeles",
+  "threshold_ft_mhhw": 1.2849,
+  "threshold_m_mhhw": 0.391638,
+  "htf_range_m": "(0.381498161, 0.401783924)",
+  "nwm_stations": [
+    {
+      "id": "PRYC1",
+      "distance_km": 1.32
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T05:00:00Z",
+    "end": "2026-09-25T06:00:00Z",
+    "capture_start": "2026-09-25T04:30:00Z",
+    "capture_end": "2026-09-25T06:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T13:57:00+00:00",
+      "peak_ft_mhhw": 1.466,
+      "peak_time": "2026-09-25T05:00:00Z",
+      "hours_at_or_above": 2,
+      "margin_ft": 0.181,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": -2.077
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -1.06
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -0.043
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 0.909
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.335
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.237
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.777
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": -0.01
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": -0.797
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": -1.454
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": -1.847
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": -1.749
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": -1.224
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -0.436
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.449
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.138
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.466
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.335
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "windy",
+      "id": "1249044275",
+      "name": "Spirit Rock: Point Reyes Seashore",
+      "lat": 37.99748,
+      "lon": -123.01718,
+      "distance_km": 2.523,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1249044275",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1249044275/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

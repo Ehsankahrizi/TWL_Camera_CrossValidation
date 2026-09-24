@@ -1,0 +1,231 @@
+{
+  "event_id": "20260925T00Z_HTF0989_exceedance",
+  "kind": "exceedance",
+  "htf_id": 989,
+  "lat": 37.2267,
+  "lon": -76.4783,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7419,
+  "threshold_m_mhhw": 0.530931,
+  "htf_range_m": "(0.519167504, 0.542722265)",
+  "nwm_stations": [
+    {
+      "id": "YKTV2",
+      "distance_km": 0.0
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T01:00:00Z",
+    "capture_start": "2026-09-24T23:30:00Z",
+    "capture_end": "2026-09-25T01:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.805,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 2,
+      "margin_ft": 0.063,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.673
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.476
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.116
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 0.722
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 0.361
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 0.164
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.066
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.197
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.558
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.116
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.542
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.805
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.805
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.673
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.312
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 0.886
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 0.492
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 0.263
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "VA-cam-3496",
+      "name": "ColemanBridge1",
+      "lat": 37.24046,
+      "lon": -76.50847,
+      "provider": "511 \u00b7 VA",
+      "road": "US-17",
+      "direction": "NB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge1.flv.png",
+      "video_url": "https://media-sfs3.vdotcameras.com/rtplive/ColemanBridge1/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge1.flv.png",
+      "distance_km": 3.078
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-3304",
+      "name": "ColemanBridge4",
+      "lat": 37.240821,
+      "lon": -76.508426,
+      "provider": "511 \u00b7 VA",
+      "road": "US-17",
+      "direction": "SB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge4.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/ColemanBridge4/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge4.flv.png",
+      "distance_km": 3.095
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-3398",
+      "name": "ColemanBridge3",
+      "lat": 37.244512,
+      "lon": -76.50532,
+      "provider": "511 \u00b7 VA",
+      "road": "US-17",
+      "direction": "SB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge3.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/ColemanBridge3/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge3.flv.png",
+      "distance_km": 3.106
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-3302",
+      "name": "ColemanBridge2",
+      "lat": 37.24471,
+      "lon": -76.50532,
+      "provider": "511 \u00b7 VA",
+      "road": "US-17",
+      "direction": "NB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge2.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/ColemanBridge2/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/ColemanBridge2.flv.png",
+      "distance_km": 3.12
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-1800",
+      "name": "RichmondUS17SB137",
+      "lat": 37.253186,
+      "lon": -76.4988,
+      "provider": "511 \u00b7 VA",
+      "road": "US-17",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/RichmondUS17SB137.flv.png",
+      "video_url": "https://media-sfs2.vdotcameras.com/rtplive/RichmondUS17SB137/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/RichmondUS17SB137.flv.png",
+      "distance_km": 3.459
+    },
+    {
+      "source": "windy",
+      "id": "1744112363",
+      "name": "Yorktown: Coleman Bridge Northbound Approach",
+      "lat": 37.24046,
+      "lon": -76.50847,
+      "distance_km": 3.078,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744112363",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744112363/day"
+    },
+    {
+      "source": "windy",
+      "id": "1744113466",
+      "name": "Yorktown: Coleman Bridge Southbound Departure",
+      "lat": 37.24082,
+      "lon": -76.50843,
+      "distance_km": 3.095,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744113466",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744113466/day"
+    },
+    {
+      "source": "windy",
+      "id": "1746699489",
+      "name": "Yorktown: Coleman Bridge Southbound Approach",
+      "lat": 37.24451,
+      "lon": -76.50532,
+      "distance_km": 3.105,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1746699489",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1746699489/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

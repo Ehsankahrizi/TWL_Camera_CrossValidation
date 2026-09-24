@@ -1,0 +1,147 @@
+{
+  "event_id": "20260925T00Z_HTF0340_control",
+  "kind": "control",
+  "htf_id": 340,
+  "lat": 47.56,
+  "lon": -122.6,
+  "time_zone": "America/Los_Angeles",
+  "threshold_ft_mhhw": 1.6917,
+  "threshold_m_mhhw": 0.51563,
+  "htf_range_m": "(0.505717165, 0.525568394)",
+  "nwm_stations": [
+    {
+      "id": "BMTW1",
+      "distance_km": 1.517
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T23:00:00Z",
+    "capture_end": "2026-09-25T01:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T13:57:00+00:00",
+      "peak_ft_mhhw": 1.079,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.613,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": -3.219
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": -4.728
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -6.401
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -7.779
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -8.533
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -8.205
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -7.024
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": -5.023
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": -2.628
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": -0.561
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 0.751
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.079
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 0.587
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": -0.692
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": -2.53
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -4.465
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -6.04
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -6.795
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "WA-cam-9037",
+      "name": "WSF Bremerton Ferry Holding",
+      "lat": 47.562650005091854,
+      "lon": -122.62535001706955,
+      "provider": "511 \u00b7 WA",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://images.wsdot.wa.gov/wsf/bremerton/holding/holding.jpg",
+      "video_url": null,
+      "page_url": "https://images.wsdot.wa.gov/wsf/bremerton/holding/holding.jpg",
+      "distance_km": 1.925
+    },
+    {
+      "source": "windy",
+      "id": "1459257325",
+      "name": "Bainbridge Island \u203a North: WSF Bremerton Ferry Holding",
+      "lat": 47.56265,
+      "lon": -122.62535,
+      "distance_km": 1.925,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1459257325",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1459257325/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

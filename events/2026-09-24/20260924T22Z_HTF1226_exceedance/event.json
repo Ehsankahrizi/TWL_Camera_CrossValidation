@@ -1,0 +1,141 @@
+{
+  "event_id": "20260924T22Z_HTF1226_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1226,
+  "lat": 39.372806,
+  "lon": -74.405572,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7858,
+  "threshold_m_mhhw": 0.544312,
+  "htf_range_m": "(0.527445522, 0.561149438)",
+  "nwm_stations": [
+    {
+      "id": "ATLN4",
+      "distance_km": 1.594
+    },
+    {
+      "id": "ACYN4",
+      "distance_km": 2.25
+    },
+    {
+      "id": "ALCN4",
+      "distance_km": 4.917
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-25T00:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.21,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 3,
+      "margin_ft": 0.425,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.062
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.373
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": -0.207
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -0.677
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -0.896
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -0.622
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": -0.031
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.712
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.434
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.948
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.21
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.155
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.642
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 0.843
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.023
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -0.546
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -0.918
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -0.808
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "usgs",
+      "id": "NJ_Inside_Thorofare_at_Atlantic_City",
+      "name": "Inside Thorofare at Atlantic City",
+      "lat": 39.3536111,
+      "lon": -74.4569444,
+      "distance_km": 4.905,
+      "provider": "USGS HIVIS",
+      "archive": true,
+      "image_dir": "https://usgs-nims-images.s3.amazonaws.com/720/NJ_Inside_Thorofare_at_Atlantic_City/",
+      "nwis_id": "01410560",
+      "page_url": "https://apps.usgs.gov/hivis/camera/NJ_Inside_Thorofare_at_Atlantic_City"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": true,
+    "backfill_done": false
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

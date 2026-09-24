@@ -1,0 +1,150 @@
+{
+  "event_id": "20260925T00Z_HTF1160_control",
+  "kind": "control",
+  "htf_id": 1160,
+  "lat": 35.230243,
+  "lon": -75.613987,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7874,
+  "threshold_m_mhhw": 0.5448,
+  "htf_range_m": "(0.537185509, 0.552409593)",
+  "nwm_stations": [
+    {
+      "id": "FRIN7",
+      "distance_km": 2.721
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T23:00:00Z",
+    "capture_end": "2026-09-25T01:00:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.651,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 0,
+      "margin_ft": -0.136,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.323
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.225
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.159
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.159
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.061
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.061
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 1.159
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.192
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.323
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.454
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.52
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.651
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.651
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.618
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.651
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.618
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.52
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.586
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "NC-cam-5364",
+      "name": "CCTV01-AVIATION-HSE-1",
+      "lat": 35.23191,
+      "lon": -75.6222,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "Airport",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5364",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5364",
+      "distance_km": 0.769
+    },
+    {
+      "source": "traffic",
+      "id": "NC-cam-5360",
+      "name": "CCTV01-NC12-69.5S_HATTERASVIL",
+      "lat": 35.22072,
+      "lon": -75.65704,
+      "provider": "North Carolina \u2014 DriveNC (NCDOT)",
+      "road": "NC-12",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://www.drivenc.gov/map/Cctv/5360",
+      "video_url": null,
+      "page_url": "https://www.drivenc.gov/map/Cctv/5360",
+      "distance_km": 4.051
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

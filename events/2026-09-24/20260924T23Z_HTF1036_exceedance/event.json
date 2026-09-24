@@ -1,0 +1,235 @@
+{
+  "event_id": "20260924T23Z_HTF1036_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1036,
+  "lat": 37.023167,
+  "lon": -76.296275,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.6859,
+  "threshold_m_mhhw": 0.513862,
+  "htf_range_m": "(0.494708185, 0.533019785)",
+  "nwm_stations": [
+    {
+      "id": "FTMV2",
+      "distance_km": 2.891
+    },
+    {
+      "id": "HMNV2",
+      "distance_km": 3.73
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T23:00:00Z",
+    "end": "2026-09-25T02:00:00Z",
+    "capture_start": "2026-09-24T22:30:00Z",
+    "capture_end": "2026-09-25T02:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.043,
+      "peak_time": "2026-09-25T00:00:00Z",
+      "hours_at_or_above": 4,
+      "margin_ft": 0.358,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.815
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.502
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.06
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 0.617
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 0.256
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 0.075
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.125
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.436
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.945
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.454
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.815
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.043
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 2.011
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.732
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.273
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 0.831
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 0.436
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 0.19
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "VA-cam-3737",
+      "name": "COFHAMP016",
+      "lat": 37.021297,
+      "lon": -76.318438,
+      "provider": "511 \u00b7 VA",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP016.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/COFHAMP016/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP016.flv.png",
+      "distance_km": 1.979
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-3733",
+      "name": "COFHAMP014",
+      "lat": 37.027534,
+      "lon": -76.323256,
+      "provider": "511 \u00b7 VA",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP014.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/COFHAMP014/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP014.flv.png",
+      "distance_km": 2.444
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-3742",
+      "name": "COFHAMP018",
+      "lat": 37.033267,
+      "lon": -76.321736,
+      "provider": "511 \u00b7 VA",
+      "road": "",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP018.flv.png",
+      "video_url": "https://media-sfs1.vdotcameras.com/rtplive/COFHAMP018/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/COFHAMP018.flv.png",
+      "distance_km": 2.524
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-848",
+      "name": "HRBT1029",
+      "lat": 37.0138,
+      "lon": -76.3253,
+      "provider": "511 \u00b7 VA",
+      "road": "I-64",
+      "direction": "EB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/HRBT1029.flv.png",
+      "video_url": "https://media-sfs4.vdotcameras.com/rtplive/HRBT1029/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/HRBT1029.flv.png",
+      "distance_km": 2.779
+    },
+    {
+      "source": "traffic",
+      "id": "VA-cam-976",
+      "name": "HR0802",
+      "lat": 37.023316,
+      "lon": -76.32913,
+      "provider": "511 \u00b7 VA",
+      "road": "I-64",
+      "direction": "WB",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/HR0802.flv.png",
+      "video_url": "https://media-sfs7.vdotcameras.com/rtplive/HR0802/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/HR0802.flv.png",
+      "distance_km": 2.917
+    },
+    {
+      "source": "windy",
+      "id": "1744113729",
+      "name": "Phoebus: Mercury Blvd and Mallory St",
+      "lat": 37.0213,
+      "lon": -76.31844,
+      "distance_km": 1.979,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744113729",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744113729/day"
+    },
+    {
+      "source": "windy",
+      "id": "1744113725",
+      "name": "Phoebus: Mercury Blvd and Woodland Rd",
+      "lat": 37.02753,
+      "lon": -76.32326,
+      "distance_km": 2.444,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744113725",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744113725/day"
+    },
+    {
+      "source": "windy",
+      "id": "1744113741",
+      "name": "Phoebus: Pembroke Ave and Woodland Rd",
+      "lat": 37.03327,
+      "lon": -76.32174,
+      "distance_km": 2.524,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744113741",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744113741/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

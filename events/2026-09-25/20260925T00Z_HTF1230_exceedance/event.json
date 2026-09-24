@@ -1,0 +1,132 @@
+{
+  "event_id": "20260925T00Z_HTF1230_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1230,
+  "lat": 39.623477,
+  "lon": -74.192132,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.731,
+  "threshold_m_mhhw": 0.527609,
+  "htf_range_m": "(0.512670884, 0.542566738)",
+  "nwm_stations": [
+    {
+      "id": "SBTN4",
+      "distance_km": 3.415
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T02:00:00Z",
+    "capture_start": "2026-09-24T23:30:00Z",
+    "capture_end": "2026-09-25T02:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.921,
+      "peak_time": "2026-09-25T01:00:00Z",
+      "hours_at_or_above": 3,
+      "margin_ft": 0.19,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.658
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.626
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.462
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.265
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.068
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 0.871
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.74
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.707
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 0.871
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.134
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.429
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.757
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.921
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.921
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.691
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.462
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.232
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.068
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "windy",
+      "id": "1760903045",
+      "name": "Long Beach Township",
+      "lat": 39.62119,
+      "lon": -74.19928,
+      "distance_km": 0.663,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1760903045",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1760903045/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

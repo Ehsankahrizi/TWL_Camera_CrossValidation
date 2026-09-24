@@ -1,0 +1,144 @@
+{
+  "event_id": "20260924T21Z_HTF1209_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1209,
+  "lat": 38.32909708,
+  "lon": -75.09216278,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7743,
+  "threshold_m_mhhw": 0.540807,
+  "htf_range_m": "(0.520418085, 0.561176731)",
+  "nwm_stations": [
+    {
+      "id": "OCIM2",
+      "distance_km": 0.123
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T21:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T20:30:00Z",
+    "capture_end": "2026-09-25T00:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.326,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 4,
+      "margin_ft": 0.552,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.342
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.718
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 0.062
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -0.299
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -0.364
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -0.036
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.521
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.21
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.801
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 2.227
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.326
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.162
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.735
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.112
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.423
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": -0.135
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -0.364
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -0.135
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "windy",
+      "id": "1793898641",
+      "name": "Ocean City \u203a South: Ocean 1 Hotel & Suites",
+      "lat": 38.33215,
+      "lon": -75.08565,
+      "distance_km": 0.662,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1793898641",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1793898641/day"
+    },
+    {
+      "source": "windy",
+      "id": "1558463689",
+      "name": "Ocean City \u203a East: Ocean City Beach",
+      "lat": 38.3338,
+      "lon": -75.08375,
+      "distance_km": 0.901,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1558463689",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1558463689/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

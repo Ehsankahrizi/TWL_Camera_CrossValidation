@@ -1,0 +1,132 @@
+{
+  "event_id": "20260924T22Z_HTF0918_exceedance",
+  "kind": "exceedance",
+  "htf_id": 918,
+  "lat": 34.656976,
+  "lon": -77.048342,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.5973,
+  "threshold_m_mhhw": 0.486857,
+  "htf_range_m": "(0.45016487, 0.523539946)",
+  "nwm_stations": [
+    {
+      "id": "EMDN7",
+      "distance_km": 1.822
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-25T01:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-25T01:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.173,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 4,
+      "margin_ft": 0.576,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.287
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.959
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 0.598
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 0.204
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -0.025
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -0.058
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.27
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.729
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.32
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.877
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.173
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.14
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.648
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.254
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.86
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 0.434
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 0.139
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -0.058
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "windy",
+      "id": "1592250847",
+      "name": "Emerald Isle: Bogue Inlet Fishing Pier",
+      "lat": 34.66077,
+      "lon": -77.03365,
+      "distance_km": 1.408,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1592250847",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1592250847/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

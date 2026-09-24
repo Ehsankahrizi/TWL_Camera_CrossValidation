@@ -1,0 +1,132 @@
+{
+  "event_id": "20260924T22Z_HTF1227_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1227,
+  "lat": 39.50138,
+  "lon": -74.323422,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.7828,
+  "threshold_m_mhhw": 0.543397,
+  "htf_range_m": "(0.518156878, 0.56865613)",
+  "nwm_stations": [
+    {
+      "id": "TKTN4",
+      "distance_km": 0.814
+    }
+  ],
+  "window": {
+    "start": "2026-09-24T22:00:00Z",
+    "end": "2026-09-25T00:00:00Z",
+    "capture_start": "2026-09-24T21:30:00Z",
+    "capture_end": "2026-09-25T00:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 2.194,
+      "peak_time": "2026-09-24T23:00:00Z",
+      "hours_at_or_above": 3,
+      "margin_ft": 0.411,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.407
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 0.849
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 0.39
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": -0.004
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": -0.267
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": -0.168
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 0.291
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 0.882
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.472
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.931
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 2.194
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 2.161
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.767
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.144
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 0.554
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 0.094
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": -0.234
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": -0.267
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "windy",
+      "id": "1719513816",
+      "name": "Little Egg Harbor Township: Rutgers University Marine Field Station",
+      "lat": 39.50945,
+      "lon": -74.32019,
+      "distance_km": 0.939,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1719513816",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1719513816/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}

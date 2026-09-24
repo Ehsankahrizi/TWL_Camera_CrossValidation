@@ -1,0 +1,147 @@
+{
+  "event_id": "20260925T00Z_HTF1021_exceedance",
+  "kind": "exceedance",
+  "htf_id": 1021,
+  "lat": 37.50509,
+  "lon": -76.341128,
+  "time_zone": "America/New_York",
+  "threshold_ft_mhhw": 1.8253,
+  "threshold_m_mhhw": 0.556351,
+  "htf_range_m": "(0.545856417, 0.56682582)",
+  "nwm_stations": [
+    {
+      "id": "WCKV2",
+      "distance_km": 3.09
+    }
+  ],
+  "window": {
+    "start": "2026-09-25T00:00:00Z",
+    "end": "2026-09-25T03:00:00Z",
+    "capture_start": "2026-09-24T23:30:00Z",
+    "capture_end": "2026-09-25T03:30:00Z"
+  },
+  "forecasts": [
+    {
+      "pipeline_run": "2026-09-24T17:54:16.767383Z",
+      "nwm_creation_time": "2026-09-24T14:10:00+00:00",
+      "peak_ft_mhhw": 1.998,
+      "peak_time": "2026-09-25T02:00:00Z",
+      "hours_at_or_above": 4,
+      "margin_ft": 0.173,
+      "series_ft_mhhw": [
+        {
+          "t": "2026-09-24T13:00:00Z",
+          "v": 1.834
+        },
+        {
+          "t": "2026-09-24T14:00:00Z",
+          "v": 1.834
+        },
+        {
+          "t": "2026-09-24T15:00:00Z",
+          "v": 1.703
+        },
+        {
+          "t": "2026-09-24T16:00:00Z",
+          "v": 1.572
+        },
+        {
+          "t": "2026-09-24T17:00:00Z",
+          "v": 1.375
+        },
+        {
+          "t": "2026-09-24T18:00:00Z",
+          "v": 1.211
+        },
+        {
+          "t": "2026-09-24T19:00:00Z",
+          "v": 1.145
+        },
+        {
+          "t": "2026-09-24T20:00:00Z",
+          "v": 1.113
+        },
+        {
+          "t": "2026-09-24T21:00:00Z",
+          "v": 1.211
+        },
+        {
+          "t": "2026-09-24T22:00:00Z",
+          "v": 1.441
+        },
+        {
+          "t": "2026-09-24T23:00:00Z",
+          "v": 1.769
+        },
+        {
+          "t": "2026-09-25T00:00:00Z",
+          "v": 1.9
+        },
+        {
+          "t": "2026-09-25T01:00:00Z",
+          "v": 1.966
+        },
+        {
+          "t": "2026-09-25T02:00:00Z",
+          "v": 1.998
+        },
+        {
+          "t": "2026-09-25T03:00:00Z",
+          "v": 1.9
+        },
+        {
+          "t": "2026-09-25T04:00:00Z",
+          "v": 1.736
+        },
+        {
+          "t": "2026-09-25T05:00:00Z",
+          "v": 1.572
+        },
+        {
+          "t": "2026-09-25T06:00:00Z",
+          "v": 1.408
+        }
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "source": "traffic",
+      "id": "VA-cam-948",
+      "name": "RichmondVA233SB207",
+      "lat": 37.487771,
+      "lon": -76.309639,
+      "provider": "511 \u00b7 VA",
+      "road": "VA-233",
+      "direction": "",
+      "archive": false,
+      "image_url": "https://snapshot.vdotcameras.com/thumbs/RichmondVA233SB207.flv.png",
+      "video_url": "https://media-sfs7.vdotcameras.com/rtplive/RichmondVA233SB207/playlist.m3u8",
+      "page_url": "https://snapshot.vdotcameras.com/thumbs/RichmondVA233SB207.flv.png",
+      "distance_km": 3.38
+    },
+    {
+      "source": "windy",
+      "id": "1744107944",
+      "name": "Cricket Hill: VA-223 MM 2.07 SB - Gwynns Island",
+      "lat": 37.48777,
+      "lon": -76.30964,
+      "distance_km": 3.38,
+      "provider": "Windy.com",
+      "archive": false,
+      "page_url": "https://windy.com/webcams/1744107944",
+      "player_day": "https://webcams.windy.com/webcams/public/embed/player/1744107944/day"
+    }
+  ],
+  "captures": [],
+  "state": {
+    "live_done": false,
+    "backfill_done": true
+  },
+  "label": {
+    "flooding_observed": null,
+    "confidence": null,
+    "labeled_by": null,
+    "notes": ""
+  }
+}
