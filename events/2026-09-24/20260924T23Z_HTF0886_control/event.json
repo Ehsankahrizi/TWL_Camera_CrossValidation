@@ -172,7 +172,68 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1756151942/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "SC-cam-4aac3d71-690e-11e7-8996-0123456789ab",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF0886_control/traffic_SC-cam-4aac3d71-690e-11e7-8996-0123456789ab/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        720,
+        480
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "SC-cam-e723c42f-d2a0-11e6-8996-0123456789ab",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF0886_control/traffic_SC-cam-e723c42f-d2a0-11e6-8996-0123456789ab/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        480,
+        270
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1793899330",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0886_control/windy_1793899330/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1748512633",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0886_control/windy_1748512633/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1756151942",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0886_control/windy_1756151942/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

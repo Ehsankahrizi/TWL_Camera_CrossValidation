@@ -130,7 +130,32 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1793899330/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "windy",
+      "camera_id": "1748512633",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0887_control/windy_1748512633/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1793899330",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0887_control/windy_1793899330/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

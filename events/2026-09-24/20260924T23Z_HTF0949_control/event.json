@@ -133,7 +133,32 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1657371331/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5389",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF0949_control/traffic_NC-cam-5389/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1657371331",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF0949_control/windy_1657371331/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

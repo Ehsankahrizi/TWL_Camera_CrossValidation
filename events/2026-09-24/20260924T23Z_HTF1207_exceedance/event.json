@@ -187,7 +187,80 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1667243629/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM213",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/traffic_DE-cam-SCAM213/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        800,
+        450
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM233",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/traffic_DE-cam-SCAM233/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM182",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/traffic_DE-cam-SCAM182/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1692037869",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/windy_1692037869/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1743445832",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/windy_1743445832/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1667243629",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1207_exceedance/windy_1667243629/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

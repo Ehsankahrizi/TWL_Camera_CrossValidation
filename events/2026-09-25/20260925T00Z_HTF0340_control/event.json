@@ -133,7 +133,32 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1459257325/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "WA-cam-9037",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-25/20260925T00Z_HTF0340_control/traffic_WA-cam-9037/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        246
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1459257325",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-25/20260925T00Z_HTF0340_control/windy_1459257325/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

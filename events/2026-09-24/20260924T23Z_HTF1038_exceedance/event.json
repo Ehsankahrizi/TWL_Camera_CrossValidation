@@ -217,7 +217,104 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1751968091/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "VA-cam-2128",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/traffic_VA-cam-2128/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        240
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "VA-cam-505351b536a1414f95ee8cb7",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/traffic_VA-cam-505351b536a1414f95ee8cb7/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "VA-cam-1843",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/traffic_VA-cam-1843/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        240
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "VA-cam-2270",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/traffic_VA-cam-2270/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        240
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "VA-cam-2113",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/traffic_VA-cam-2113/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1744112152",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/windy_1744112152/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1744110153",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/windy_1744110153/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1751968091",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1038_exceedance/windy_1751968091/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        320,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

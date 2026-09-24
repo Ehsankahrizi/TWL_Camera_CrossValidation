@@ -217,7 +217,92 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1669056230/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM098",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/traffic_DE-cam-SCAM098/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM169",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/traffic_DE-cam-SCAM169/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-PCAM4061",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/traffic_DE-cam-PCAM4061/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        800,
+        450
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "DE-cam-SCAM099",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "hls_frame",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/traffic_DE-cam-SCAM099/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1666643757",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/windy_1666643757/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1667243478",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/windy_1667243478/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1669056230",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-25/20260925T00Z_HTF1213_control/windy_1669056230/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

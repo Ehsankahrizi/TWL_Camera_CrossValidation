@@ -118,7 +118,20 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1719513816/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "windy",
+      "camera_id": "1719513816",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T22Z_HTF1227_exceedance/windy_1719513816/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

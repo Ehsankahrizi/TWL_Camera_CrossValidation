@@ -172,7 +172,68 @@
       "player_day": "https://webcams.windy.com/webcams/public/embed/player/1604167740/day"
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5366",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF1091_exceedance/traffic_NC-cam-5366/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        540,
+        330
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5367",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF1091_exceedance/traffic_NC-cam-5367/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        800,
+        450
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1723831784",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1091_exceedance/windy_1723831784/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1793911962",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1091_exceedance/windy_1793911962/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    },
+    {
+      "source": "windy",
+      "camera_id": "1604167740",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "windy_current",
+      "file": "2026-09-24/20260924T23Z_HTF1091_exceedance/windy_1604167740/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        400,
+        224
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

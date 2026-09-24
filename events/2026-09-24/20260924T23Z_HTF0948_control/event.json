@@ -151,7 +151,44 @@
       "distance_km": 4.61
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5389",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF0948_control/traffic_NC-cam-5389/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5391",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF0948_control/traffic_NC-cam-5391/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        896,
+        504
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5388",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-24/20260924T23Z_HTF0948_control/traffic_NC-cam-5388/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true

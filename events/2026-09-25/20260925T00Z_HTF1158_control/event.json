@@ -136,7 +136,32 @@
       "distance_km": 3.075
     }
   ],
-  "captures": [],
+  "captures": [
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5364",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-25/20260925T00Z_HTF1158_control/traffic_NC-cam-5364/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        800,
+        450
+      ]
+    },
+    {
+      "source": "traffic",
+      "camera_id": "NC-cam-5360",
+      "time": "2026-09-24T23:16:06Z",
+      "method": "snapshot",
+      "file": "2026-09-25/20260925T00Z_HTF1158_control/traffic_NC-cam-5360/2026-09-24T23-16Z.jpg",
+      "artifact": "captures-36071805864",
+      "size": [
+        896,
+        504
+      ]
+    }
+  ],
   "state": {
     "live_done": false,
     "backfill_done": true
