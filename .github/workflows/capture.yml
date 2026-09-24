@@ -1,0 +1,56 @@
+name: Capture camera frames
+
+# Every 15 minutes: live frames for events in their window, archive frames for
+# events whose window has closed. Images are uploaded as a run artifact (kept 90
+# days) and synced to Box by tools/sync_to_box.py; only metadata is committed.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crossval-state
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Ensure ffmpeg (for frames from live video)
+        run: command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+
+      - name: Capture
+        id: capture
+        env:
+          API_WWW_WINDY_COM: ${{ secrets.API_WWW_WINDY_COM }}
+          WEBCOOS_TOKEN: ${{ secrets.WEBCOOS_TOKEN }}
+          SAVE_WINDY_IMAGES: ${{ vars.SAVE_WINDY_IMAGES }}
+        run: python -m crossval.capture
+
+      - name: Upload frames
+        if: steps.capture.outputs.frames != '0' && steps.capture.outputs.frames != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-${{ github.run_id }}
+          path: captures/
+          retention-days: 90
+          compression-level: 0     # JPEGs are already compressed
+
+      - name: Commit event metadata
+        run: |
+          git config user.name "CrossVal Bot"
+          git config user.email "actions@github.com"
+          git add events schedule
+          if git diff --staged --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Capture $(date -u +'%Y-%m-%d %H:%M UTC'): ${{ steps.capture.outputs.frames }} frames"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 10; done
