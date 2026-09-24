@@ -1,0 +1,42 @@
+name: Plan capture events
+
+# After each coastal-twl-app forecast run (01:30/07:30/13:30/19:30 UTC, ~5 min long),
+# turn the new HTF forecast into capture events with nearby cameras.
+on:
+  schedule:
+    - cron: '50 1,7,13,19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crossval-state        # plan and capture both commit events/ and schedule/
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Plan events from the latest forecast
+        env:
+          API_WWW_WINDY_COM: ${{ secrets.API_WWW_WINDY_COM }}
+          WEBCOOS_TOKEN: ${{ secrets.WEBCOOS_TOKEN }}
+        run: python -m crossval.plan
+
+      - name: Commit events and schedule
+        run: |
+          git config user.name "CrossVal Bot"
+          git config user.email "actions@github.com"
+          git add events schedule
+          if git diff --staged --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Plan events for forecast run $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 10; done
