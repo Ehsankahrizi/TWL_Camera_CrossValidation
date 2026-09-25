@@ -284,6 +284,10 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 
 - **Why an app and not a plain script:** macOS lets background jobs write into Box Drive only when they run as an app that has been granted access.
 - **If the Mac is off:** frames wait in S3 and are copied at the next run.
+- **Review workbook:** after each sync, `HTF_camera_review.xlsx` gets rows for any new event × camera.
+  - The file is rewritten **only** when there are new rows, and never while it is open in Excel on this Mac (that hour is skipped and retried).
+  - Answers already typed are always kept.
+  - The Mac's built-in Python needs `openpyxl` for this: `/usr/bin/python3 -m pip install --user openpyxl`.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
 - **Stop it:** `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plist`
 
@@ -298,6 +302,8 @@ BOX="$HOME/Library/CloudStorage/Box-Box/Coastal Hydrology Lab/Ehsan's project/Ca
 ```
 
 ### 1. Create or refresh the workbook
+
+The hourly Box sync does this automatically (see [Box sync](#box-sync-lab-mac)). To run it by hand:
 
 ```bash
 python3 tools/make_review_sheet.py --events "$BOX"
