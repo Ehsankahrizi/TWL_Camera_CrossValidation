@@ -76,16 +76,16 @@ Each event gets one folder, with the same layout in S3 (`s3://bil6-twl-camera-cr
       map.png
 ```
 
-Each camera folder also has **`map.png`**, a two-panel figure that is redrawn every time the camera saves a frame.
+Each camera folder also has **`map.png`**, a two-panel figure (map on top, time series below) that is redrawn every time the camera saves a frame.
 
-**Left panel: zoomed street map**
+**Top panel: zoomed street map**
 - the HTF point (ID, coordinates, threshold);
 - the 5 km search radius;
 - the camera;
 - a line with the distance from the HTF point to the camera;
 - a legend, scale bar and north arrow.
 
-**Right panel: forecast time series, like the iOS app**
+**Bottom panel: forecast time series, like the iOS app (same width, wide and short)**
 - the mean NWM TWL forecast for the HTF point (ft above MHHW), with earlier forecast runs shown faintly;
 - the HTF threshold, and the part of the forecast above it shaded red;
 - the HTF period highlighted;
