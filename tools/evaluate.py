@@ -2,10 +2,12 @@
 """Score the HTF forecast against the review workbook filled in by a reviewer.
 
 Reads HTF_camera_review.xlsx (made by tools/make_review_sheet.py): one row per
-event × camera with "Has the image flooded?" = Y / N. Per event:
-    flooded      if any camera is Y
-    not flooded  if its answered cameras are all N
-    skipped      if no camera is answered, or all of the event's frames are stale
+event × camera with "Has the image flooded?" = Yes / No / NaN / Invalid. NaN (photos
+cannot be judged) and Invalid (camera cannot show ground flooding, e.g. on a bridge)
+are excluded. Per event:
+    flooded      if any camera is Yes
+    not flooded  if its Yes/No cameras are all No
+    skipped      if no camera is Yes or No, or all of the event's frames are stale
 
     forecast \\ observed    flooding      no flooding
     exceedance              hit           false alarm
@@ -22,7 +24,7 @@ from pathlib import Path
 
 
 def read_review(path):
-    """{event_id: [answers]} from the 'Has the image flooded?' column."""
+    """{event_id: ["Y"/"N", ...]} from the 'Has the image flooded?' column (Yes/No only)."""
     from openpyxl import load_workbook
     ws = load_workbook(path, read_only=True, data_only=True)["Review"]
     rows = ws.iter_rows(values_only=True)
@@ -30,6 +32,7 @@ def read_review(path):
     answers = {}
     for r in rows:
         eid, ans = r[head["Event ID"]], str(r[head["Has the image flooded?"]] or "").strip().upper()
+        ans = {"YES": "Y", "NO": "N"}.get(ans, ans)          # Y/N from older sheets also accepted
         if eid and ans in ("Y", "N"):
             answers.setdefault(eid, []).append(ans)
     return answers
