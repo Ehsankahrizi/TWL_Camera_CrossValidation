@@ -295,6 +295,8 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 
 ## Review and evaluate
 
+> **Student reviewers:** start with the [Reviewer guide](docs/REVIEWER_GUIDE.md). A copy is in the Box folder as `README_for_reviewers.md`.
+
 Review answers live in one Excel workbook in the Box folder, **`HTF_camera_review.xlsx`**. The hourly sync never touches it; it only writes the event folders.
 
 ```bash
