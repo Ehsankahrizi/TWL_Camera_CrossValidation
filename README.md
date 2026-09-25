@@ -289,15 +289,23 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
   - Answers already typed are always kept.
   - The Mac's built-in Python needs `openpyxl` for this: `/usr/bin/python3 -m pip install --user openpyxl`.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
+
+**What the Box folder contains**
+
+| Item | Written by |
+|---|---|
+| `YYYY-MM-DD/<event_id>/` folders with `event.json`, camera sub-folders, JPEG frames and `map.png` | The hourly sync (copied from S3) |
+| `HTF_camera_review.xlsx` | The hourly sync adds new rows; the reviewer fills in answers |
+| `Reviewer_Guide.docx` | Placed by hand; a copy is `docs/Reviewer_Guide.docx` in this repo |
 - **Stop it:** `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plist`
 
 ---
 
 ## Review and evaluate
 
-> **Student reviewers:** start with the [Reviewer guide](docs/REVIEWER_GUIDE.md). A copy is in the Box folder as `README_for_reviewers.md`.
+> **Student reviewers:** start with the **Reviewer guide**, `Reviewer_Guide.docx` in the Box folder. It is also in this repo as [Word](docs/Reviewer_Guide.docx) and [Markdown](docs/REVIEWER_GUIDE.md); the Markdown version is the text source.
 
-Review answers live in one Excel workbook in the Box folder, **`HTF_camera_review.xlsx`**. The hourly sync never touches it; it only writes the event folders.
+Review answers live in one Excel workbook in the Box folder, **`HTF_camera_review.xlsx`**. The hourly sync adds rows for new events to it, and never removes answers.
 
 ```bash
 BOX="$HOME/Library/CloudStorage/Box-Box/Coastal Hydrology Lab/Ehsan's project/CamerData/TWL_CrossValidation_captures"
