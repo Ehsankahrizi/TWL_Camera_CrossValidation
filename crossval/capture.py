@@ -47,6 +47,21 @@ def frame_path(ev, cam, t):
     return (Path(ev["window"]["start"][:10]) / ev["event_id"] / f"{cam['source']}_{safe(cam['id'])}" / f"{stamp(t)}.jpg")
 
 
+def ensure_map(ev, cam, rel):
+    """Draw map.png in the camera's folder the first time it gets a frame."""
+    if cam.get("map_file"):
+        return
+    from . import maps
+    from . import util
+    out = config.CAPTURE_DIR / Path(rel).parent / "map.png"
+    try:
+        if maps.render(ev, cam, out):
+            util.WRITTEN.add(out)
+            cam["map_file"] = str(Path(rel).parent / "map.png")
+    except Exception as e:                       # a map must never stop the capture
+        print(f"    ! map for {cam['id']}: {e}")
+
+
 def record(ev, cam, t, rel, method, size, image_time, basis, digest):
     """Add a saved frame to event.json.
 
@@ -141,6 +156,7 @@ def capture_live(ev, now):
         size = save_image(data, config.CAPTURE_DIR / rel)
         if size:
             record(ev, cam, now, rel, method, size, image_time, basis, digest)
+            ensure_map(ev, cam, rel)
             got += 1
     return got
 
@@ -202,6 +218,7 @@ def backfill(ev):
             if size:
                 basis = "usgs_filename" if cam["source"] == "usgs" else "webcoos_timestamp"
                 record(ev, cam, t, rel, f"{cam['source']}_archive", size, t, basis, hashlib.sha1(data).hexdigest())
+                ensure_map(ev, cam, rel)
                 got += 1
     return got
 

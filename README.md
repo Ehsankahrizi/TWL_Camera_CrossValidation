@@ -70,9 +70,20 @@ Each event gets one folder, with the same layout in S3 (`s3://bil6-twl-camera-cr
       2026-09-24T21-30Z.jpg
       2026-09-24T21-45Z.jpg
       …
+      map.png
     usgs_NJ_Inside_Thorofare_at_Atlantic_City/
       2026-09-24T22-00Z.jpg
+      map.png
 ```
+
+Each camera folder also has **`map.png`**, a zoomed street map drawn when the camera gets its first frame. It shows:
+- the HTF point (ID, coordinates, threshold);
+- the 5 km search radius;
+- the camera;
+- a line with the distance from the HTF point to the camera;
+- a legend, scale bar and north arrow.
+
+To add maps to folders created before this feature, run `python3 -m crossval.maps --events "$BOX"`.
 
 **Event ID:** `<window start, UTC hour>_HTF<point id>_<exceedance|control>`
 

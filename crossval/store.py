@@ -57,9 +57,9 @@ def push_state():
     for path in sorted(util.WRITTEN):
         if not path.exists():
             continue
-        extra = {"ContentType": "image/jpeg" if path.suffix == ".jpg" else "application/json"}
+        extra = {"ContentType": {".jpg": "image/jpeg", ".png": "image/png"}.get(path.suffix, "application/json")}
         s3().upload_file(str(path), config.S3_BUCKET, _key(path), ExtraArgs=extra)
-        if path.suffix == ".jpg":
+        if path.suffix in (".jpg", ".png"):
             path.unlink()                        # keep the container's disk small
         n += 1
     util.WRITTEN.clear()
