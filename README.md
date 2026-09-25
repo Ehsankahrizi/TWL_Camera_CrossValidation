@@ -86,14 +86,36 @@ Each event gets one folder, both in `events/` (metadata only) and in Box (metada
 | `htf_id`, `lat`, `lon`, `time_zone` | HTF point | decimal degrees; IANA zone |
 | `threshold_ft_mhhw` / `threshold_m_mhhw` | HTF mid threshold | **ft** / **m** above **MHHW** |
 | `htf_range_m` | HTF threshold range from the source data | **m** above MHHW |
+| `window.*_local` | The same window bounds in the point's local time, e.g. `2026-09-24T19:00:00-04:00` | local |
 | `window.start`, `window.end` | First / last forecast hour at or above the threshold (controls: forecast peak) | UTC |
 | `window.capture_start`, `capture_end` | Window padded by 30 min (controls: ±60 min around the peak) | UTC |
 | `forecasts[]` | One entry per forecast run that predicted this event: `peak_ft_mhhw`, `peak_time`, `hours_at_or_above`, `margin_ft` (peak − threshold), full `series_ft_mhhw` | **ft MHHW**, UTC |
 | `nwm_stations[]` | NWM stations averaged for the forecast | km |
 | `cameras[]` | Cameras within 5 km: `source`, `id`, `name`, `distance_km`, `archive`, links | km |
-| `captures[]` | Every saved frame: `camera_id`, `time`, `method` (`hls_frame`, `snapshot`, `usgs_archive`, …), `file`, `artifact`, pixel `size` | UTC |
+| `captures[]` | Every saved frame (see below) | UTC + local |
 | `state` | `live_done`, `backfill_done` | — |
 | `label` | **Filled in by a person:** `flooding_observed` (true/false), `confidence` (high/medium/low), `labeled_by`, `notes` | — |
+
+### Frame timing (`captures[]`)
+
+A frame's *fetch* time and the time the camera *took* the image can differ. For example, a frozen traffic camera keeps serving an old picture, and Windy refreshes some webcams only every hour. Both are recorded:
+
+| Field | Meaning |
+|---|---|
+| `time` / `time_local` | When the frame was fetched (live) or recorded (archive) — UTC / point's local time |
+| `image_time` / `image_time_local` | When the camera took the image, if known |
+| `image_time_basis` | How `image_time` is known: `live_stream` (frame from live video), `http_last_modified` (agency server header), `windy_last_updated` (Windy API), `usgs_filename`, `webcoos_timestamp`, or `unknown` |
+| `age_min` | `time − image_time` in minutes |
+| `stale` | `true` if the image was more than 30 min old when fetched. `tools/evaluate.py` skips events whose frames are all stale. |
+| `method` | `hls_frame`, `snapshot`, `windy_current`, `usgs_archive`, `webcoos_archive` |
+| `sha1` | Image hash; a frame identical to the camera's previous one (frozen camera) is not saved |
+| `file`, `artifact`, `size` | Where the JPEG is and its pixel size |
+
+For traffic cameras, both the video frame and the agency snapshot are fetched, and the larger image is kept. USGS archive frames are full resolution.
+
+**Checked on 2026-09-25:**
+- **USGS:** file-name times match the time printed on the image (e.g. `23-12Z` ↔ "19:12:11 EDT").
+- **Traffic snapshots:** 63 of 68 cameras served images less than 1 minute old.
 
 ---
 

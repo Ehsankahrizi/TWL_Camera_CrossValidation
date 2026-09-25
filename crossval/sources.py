@@ -185,11 +185,11 @@ def windy_near(lat, lon, km=config.CAMERA_RADIUS_KM):
 
 
 def windy_current_image(webcam_id):
-    """Fresh (10-minute) image URL for a Windy webcam, or None."""
+    """(fresh 10-minute image URL, time the image was taken per Windy) or (None, None)."""
     j = http_json(f"{WINDY_API}/{webcam_id}", params={"include": "images"},
                   headers={"x-windy-api-key": config.WINDY_API_KEY, "Accept": "application/json"})
     img = ((j or {}).get("images") or {}).get("current") or {}
-    return img.get("preview") or img.get("thumbnail")
+    return img.get("preview") or img.get("thumbnail"), (j or {}).get("lastUpdatedOn")
 
 
 def cameras_near(lat, lon):

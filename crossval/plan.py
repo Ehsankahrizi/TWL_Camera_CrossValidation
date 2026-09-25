@@ -16,7 +16,7 @@ from datetime import timedelta
 
 from . import config
 from .sources import cameras_near
-from .util import http_json, iso, parse_time, read_json, utcnow, write_json
+from .util import add_local_window, http_json, iso, parse_time, read_json, utcnow, write_json
 
 FT_PER_M = 3.280839895
 MERGE_GAP = timedelta(hours=3)      # hours at/above threshold this close belong to the same high tide
@@ -179,6 +179,7 @@ def main():
             n_ctl += 1
 
     for ev in events.values():
+        add_local_window(ev)
         write_json(event_path(ev), ev)
     schedule = {
         "updated": iso(now),

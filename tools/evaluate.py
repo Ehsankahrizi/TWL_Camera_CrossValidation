@@ -7,7 +7,9 @@ frames:
               "labeled_by": "EK", "notes": "water over road at 00:15Z"}
 
 Forecast = "exceedance" events (predicted flooding) vs "control" events (predicted
-no flooding). Observation = flooding_observed. Unlabeled events are skipped.
+no flooding). Observation = flooding_observed. Unlabeled events are skipped, and so
+are labeled events whose frames are all stale (image older than STALE_AFTER_MIN when
+captured), since their pictures do not show the forecast period.
 
     forecast \\ observed    flooding      no flooding
     exceedance              hit           false alarm
@@ -32,11 +34,16 @@ def main():
     args = ap.parse_args()
 
     rows, counts = [], {"hit": 0, "false_alarm": 0, "miss": 0, "correct_negative": 0}
+    skipped_stale = 0
     for path in sorted((ROOT / "events").glob("*/*/event.json")):
         ev = json.loads(path.read_text())
         lab = ev.get("label") or {}
         obs = lab.get("flooding_observed")
         if obs is None or RANK.get(lab.get("confidence") or "low", 0) < RANK[args.min_confidence]:
+            continue
+        fresh = [c for c in ev["captures"] if not c.get("stale")]
+        if not fresh:
+            skipped_stale += 1
             continue
         fc = ev["kind"] == "exceedance"
         outcome = ("hit" if obs else "false_alarm") if fc else ("miss" if obs else "correct_negative")
@@ -45,11 +52,12 @@ def main():
         rows.append({"event_id": ev["event_id"], "htf_id": ev["htf_id"], "kind": ev["kind"], "observed": obs,
                      "outcome": outcome, "peak_ft_mhhw": last.get("peak_ft_mhhw"),
                      "threshold_ft_mhhw": ev["threshold_ft_mhhw"], "margin_ft": last.get("margin_ft"),
-                     "frames": len(ev["captures"]), "confidence": lab.get("confidence")})
+                     "frames": len(ev["captures"]), "fresh_frames": len(fresh),
+                     "stale_frames": len(ev["captures"]) - len(fresh), "confidence": lab.get("confidence")})
 
     h, f, m, c = counts["hit"], counts["false_alarm"], counts["miss"], counts["correct_negative"]
     n = h + f + m + c
-    print(f"Labeled events: {n}")
+    print(f"Labeled events: {n}" + (f" (+{skipped_stale} skipped: all frames stale)" if skipped_stale else ""))
     print(f"  hits {h} | false alarms {f} | misses {m} | correct negatives {c}")
     if n:
         pod = h / (h + m) if h + m else float("nan")
