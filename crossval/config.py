@@ -20,6 +20,7 @@ MAX_WINDY_CAMERAS = 3
 # above the threshold, padded on both sides so the rise and fall are recorded too.
 WINDOW_PAD_MIN = 30
 LIVE_CAPTURE_INTERVAL_MIN = 15          # capture workflow cadence (cron */15)
+STALE_AFTER_MIN = 30                    # a live frame whose image is older than this is flagged stale
 BACKFILL_DELAY_MIN = 60                 # wait this long after a window closes before pulling archives
 ARCHIVE_FRAME_STEP_MIN = 15             # keep at most one archived frame per this many minutes
 

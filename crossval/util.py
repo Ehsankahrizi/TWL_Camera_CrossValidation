@@ -5,6 +5,8 @@ import json
 import math
 import time
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -76,6 +78,31 @@ def parse_time(s):
 
 def iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def local_iso(dt, tz_name):
+    """Same instant in the point's local time, e.g. 2026-09-24T19:12:11-04:00 (None if no zone)."""
+    if not dt or not tz_name:
+        return None
+    try:
+        return dt.astimezone(ZoneInfo(tz_name)).isoformat(timespec="seconds")
+    except (ZoneInfoNotFoundError, ValueError):
+        return None
+
+
+def add_local_window(ev):
+    """window.*_local: the UTC window bounds in the HTF point's own time zone."""
+    w = ev["window"]
+    for k in ("start", "end", "capture_start", "capture_end"):
+        w[f"{k}_local"] = local_iso(parse_time(w[k]), ev.get("time_zone"))
+
+
+def http_date(value):
+    """Parse an HTTP date header (e.g. Last-Modified) → aware UTC datetime, or None."""
+    try:
+        return parsedate_to_datetime(value).astimezone(timezone.utc) if value else None
+    except (TypeError, ValueError):
+        return None
 
 
 def stamp(dt):
