@@ -196,10 +196,11 @@ def main():
     made = 0
     for p in sorted(Path(args.events).glob("*/*/event.json")):
         ev = json.loads(p.read_text())
-        cams = {(c["source"], c["id"]): c for c in ev["cameras"]}
-        for key in {(c["source"], c["camera_id"]) for c in ev["captures"]}:
-            cam = cams.get(key)
-            out = p.parent / f"{key[0]}_{safe(key[1])}" / "map.png"
+        # Match camera folders on disk (they may hold frames event.json no longer lists).
+        by_folder = {f"{c['source']}_{safe(c['id'])}": c for c in ev["cameras"]}
+        for folder in sorted(d for d in p.parent.iterdir() if d.is_dir() and any(d.glob("*.jpg"))):
+            cam = by_folder.get(folder.name)
+            out = folder / "map.png"
             if cam and (args.force or not out.exists()) and render(ev, cam, out):
                 made += 1
     print(f"drew {made} maps")
