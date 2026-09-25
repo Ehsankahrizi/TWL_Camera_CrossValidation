@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Build the Excel review sheet a student fills in, one row per event × camera.
 
+Only forecast exceedance events are listed (the HTF periods the iOS app reported);
+--include-controls adds below-threshold control events.
+
 For every event folder with captured frames, each camera gets a row with the HTF
 period (the forecast hours at/above threshold, local time and UTC), the HTF point,
 the camera and its distance, a link to its image folder, and a yellow
@@ -139,9 +142,9 @@ def style_header(ws, headers, widths):
     ws.row_dimensions[1].height = 45
 
 
-def build(events_dir, out_path):
+def build(events_dir, out_path, include_controls=False):
     old = previous_answers(out_path)
-    rows = collect_rows(events_dir)
+    rows = [r for r in collect_rows(events_dir) if include_controls or r["kind"] == "exceedance"]
     wb = Workbook()
 
     # ── Instructions ──
@@ -253,8 +256,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--events", required=True, help="folder with <date>/<event_id>/event.json (the Box folder)")
     ap.add_argument("--out", help="workbook path (default: <events>/HTF_camera_review.xlsx)")
+    ap.add_argument("--include-controls", action="store_true",
+                    help="also list control (below-threshold) events; default is forecast exceedances only")
     args = ap.parse_args()
-    build(Path(args.events), Path(args.out or Path(args.events) / "HTF_camera_review.xlsx"))
+    build(Path(args.events), Path(args.out or Path(args.events) / "HTF_camera_review.xlsx"), args.include_controls)
 
 
 if __name__ == "__main__":
