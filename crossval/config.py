@@ -28,13 +28,18 @@ CONTROL_MAX_PER_RUN = 15                # sampled per forecast run, nearest-to-t
 CONTROL_WINDOW_HALF_MIN = 60            # capture ±60 min around the forecast peak
 
 # ── Images ──
-IMAGE_MAX_WIDTH = 1280
+IMAGE_MAX_WIDTH = 1920                  # full HD kept as is; larger frames are downsized
 JPEG_QUALITY = 85
 
-# ── Paths ──
-EVENTS_DIR = REPO_ROOT / "events"       # committed metadata: events/<date>/<event_id>/event.json
-SCHEDULE_PATH = REPO_ROOT / "schedule" / "schedule.json"
-CAPTURE_DIR = Path(os.environ.get("CAPTURE_DIR", REPO_ROOT / "captures"))  # images (not committed)
+# ── Storage ──
+# GitHub Actions: metadata lives in the repo, images in run artifacts.
+# ECS (S3_BUCKET set): metadata and images live in S3; each cycle works in a local
+# copy under STATE_DIR that crossval.store downloads before and uploads after.
+S3_BUCKET = os.environ.get("S3_BUCKET", "").strip()
+STATE_ROOT = Path(os.environ.get("STATE_DIR", REPO_ROOT))
+EVENTS_DIR = STATE_ROOT / "events"      # events/<date>/<event_id>/event.json
+SCHEDULE_PATH = STATE_ROOT / "schedule" / "schedule.json"
+CAPTURE_DIR = Path(os.environ.get("CAPTURE_DIR", STATE_ROOT / "captures"))  # images
 
 # ── Credentials (GitHub repository secrets; never hard-coded) ──
 WINDY_API_KEY = os.environ.get("API_WWW_WINDY_COM", "").strip()

@@ -1,0 +1,8 @@
+.git
+.github
+events
+schedule
+captures
+tools
+__pycache__
+*.md
