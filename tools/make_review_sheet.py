@@ -92,14 +92,21 @@ def collect_rows(events_dir):
         ev = json.loads(path.read_text())
         tz = ev.get("time_zone")
         w = ev["window"]
-        cams = {(c["source"], c["id"]): c for c in ev["cameras"]}
-        by_cam = {}
+        by_folder = {f"{c['source']}_{safe(c['id'])}": c for c in ev["cameras"]}
+        caps_by_cam = {}
         for cap in ev["captures"]:
-            by_cam.setdefault((cap["source"], cap["camera_id"]), []).append(cap)
-        for (source, cam_id), caps in by_cam.items():
-            cam = cams.get((source, cam_id), {})
-            times = sorted(c["time"] for c in caps)
-            folder = path.parent.relative_to(events_dir) / f"{source}_{safe(cam_id)}"
+            caps_by_cam.setdefault((cap["source"], str(cap["camera_id"])), []).append(cap)
+        # One row per camera folder on disk: event.json may not list every frame in it
+        # (e.g. frames synced from an earlier run), so images are counted from the files.
+        for cam_dir in sorted(d for d in path.parent.iterdir() if d.is_dir()):
+            stamps = sorted(f.stem for f in cam_dir.glob("*.jpg"))
+            cam = by_folder.get(cam_dir.name)
+            if not stamps or not cam:
+                continue
+            source, cam_id = cam["source"], str(cam["id"])
+            caps = caps_by_cam.get((source, cam_id), [])
+            times = [re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00Z", s) for s in stamps]
+            folder = cam_dir.relative_to(events_dir)
             rows.append({
                 "event_id": ev["event_id"], "htf_id": ev["htf_id"],
                 "lat": round(ev["lat"], 4), "lon": round(ev["lon"], 4), "tz": tz or "UTC",
@@ -108,7 +115,7 @@ def collect_rows(events_dir):
                 "source": SOURCE_NAME.get(source, source), "source_key": source,
                 "camera_id": str(cam_id), "camera_name": cam.get("name", ""),
                 "distance_km": cam.get("distance_km"),
-                "n_images": len(caps), "first_local": local(times[0], tz), "last_local": local(times[-1], tz),
+                "n_images": len(stamps), "first_local": local(times[0], tz), "last_local": local(times[-1], tz),
                 "n_stale": sum(1 for c in caps if c.get("stale")),
                 "folder": str(folder), "map": "map.png" if (Path(events_dir) / folder / "map.png").exists() else "",
                 "kind": ev["kind"],
