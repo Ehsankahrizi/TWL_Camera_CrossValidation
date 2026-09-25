@@ -10,6 +10,10 @@ row per event, which the sync never overwrites:
 flooding_observed: yes/no (or true/false, 1/0). Rows left blank are skipped. The
 "label" block inside event.json is used only for events without a CSV row.
 
+Alternatively --review reads the per-camera Excel sheet from make_review_sheet.py:
+an event counts as flooded if any camera is Y, not flooded if its answered cameras
+are all N, and is skipped if none is answered.
+
 Forecast = "exceedance" events (predicted flooding) vs "control" events (predicted
 no flooding). Observation = flooding_observed. Unlabeled events are skipped, and so
 are labeled events whose frames are all stale (image older than STALE_AFTER_MIN when
@@ -52,6 +56,21 @@ def read_labels(path):
     return labels
 
 
+def read_review(path):
+    """Per-event labels from the review workbook (column 'Has the image flooded?')."""
+    from openpyxl import load_workbook
+    ws = load_workbook(path, read_only=True, data_only=True)["Review"]
+    rows = ws.iter_rows(values_only=True)
+    head = {h: i for i, h in enumerate(next(rows))}
+    answers = {}
+    for r in rows:
+        eid, ans = r[head["Event ID"]], str(r[head["Has the image flooded?"]] or "").strip().upper()
+        if eid and ans in ("Y", "N"):
+            answers.setdefault(eid, []).append(ans)
+    return {eid: {"flooding_observed": "Y" in a, "confidence": "medium", "labeled_by": "review sheet",
+                  "notes": f"{a.count('Y')} of {len(a)} cameras Y"} for eid, a in answers.items()}
+
+
 def write_template(events_dir, path):
     """labels.csv with one row per event (existing rows kept), sorted by event_id."""
     existing = {}
@@ -74,6 +93,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--events", default=str(ROOT / "events"), help="folder with <date>/<event_id>/event.json")
     ap.add_argument("--labels", help="labels CSV (event_id, flooding_observed, confidence, labeled_by, notes)")
+    ap.add_argument("--review", help="review workbook (HTF_camera_review.xlsx) instead of / as well as --labels")
     ap.add_argument("--template", help="create/extend a labels CSV with a row per event, then exit")
     ap.add_argument("--min-confidence", choices=RANK, default="low")
     ap.add_argument("--csv", help="also write one row per labeled event")
@@ -81,7 +101,8 @@ def main():
     if args.template:
         write_template(args.events, args.template)
         return
-    csv_labels = read_labels(args.labels)
+    csv_labels = read_review(args.review) if args.review else {}
+    csv_labels.update(read_labels(args.labels))         # labels.csv rows take precedence
 
     rows, counts = [], {"hit": 0, "false_alarm": 0, "miss": 0, "correct_negative": 0}
     skipped_stale = 0
