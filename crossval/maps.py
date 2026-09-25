@@ -280,7 +280,9 @@ def render(ev, cam, out_path, image_times=None):
 
     # scale bar (1 or 2 km) and north arrow
     mpp = metres_per_px(lat, z)
-    km = 2 if 2000 / mpp < 260 else 1
+    # Bar length: the round distance whose on-screen length is closest to ~220 px,
+    # so the 0 / half / full labels never crowd (zoom varies with latitude).
+    km = min((0.5, 1, 2, 5, 10), key=lambda k: abs(k * 1000 / mpp - 220))
     bar = km * 1000 / mpp
     bx, by = W - 60 - bar, H - 62
     d.rectangle([bx - 22, by - 36, W - 22, by + 20], fill=(255, 255, 255, 235))
