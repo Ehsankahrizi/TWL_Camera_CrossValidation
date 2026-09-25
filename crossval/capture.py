@@ -24,11 +24,12 @@ from pathlib import Path
 
 from . import config
 from .sources import WEBCOOS_API, windy_current_image
-from .util import http_get, http_json, iso, parse_time, read_json, save_image, stamp, utcnow, write_json
+from .util import http_get, http_json, image_pixels, iso, parse_time, read_json, save_image, stamp, utcnow, write_json
 
 GIVE_UP_AFTER = timedelta(days=3)       # stop trying to backfill an event after this
 RUN_ID = os.environ.get("GITHUB_RUN_ID", "local")
-ARTIFACT = f"captures-{RUN_ID}"
+# Where the image file lives: a GitHub run artifact, or next to event.json in S3.
+ARTIFACT = f"s3://{config.S3_BUCKET}/events" if config.S3_BUCKET else f"captures-{RUN_ID}"
 
 
 def safe(name):
@@ -77,11 +78,18 @@ def capture_live(ev, now):
             continue
         data, method = None, None
         if cam["source"] == "traffic":
+            # Try both the live video and the agency snapshot; some agencies serve a
+            # 1080p snapshot but only a 240p stream (or the reverse). Keep the larger.
+            options = []
             if cam.get("video_url"):
-                data, method = hls_frame(cam["video_url"]), "hls_frame"
-            if not data and cam.get("image_url"):
+                options.append((hls_frame(cam["video_url"]), "hls_frame"))
+            if cam.get("image_url"):
                 sep = "&" if "?" in cam["image_url"] else "?"
-                data, method = fetch_bytes(f"{cam['image_url']}{sep}_t={int(now.timestamp())}"), "snapshot"
+                options.append((fetch_bytes(f"{cam['image_url']}{sep}_t={int(now.timestamp())}"), "snapshot"))
+            options = [(d, m, image_pixels(d)) for d, m in options if d]
+            options = [o for o in options if o[2]]
+            if options:
+                data, method, _ = max(options, key=lambda o: o[2])
         elif cam["source"] == "windy" and config.SAVE_WINDY_IMAGES and config.WINDY_API_KEY:
             url = windy_current_image(cam["id"])
             data, method = (fetch_bytes(url), "windy_current") if url else (None, None)
@@ -164,7 +172,7 @@ def main():
     for item in schedule["events"]:
         if item.get("done"):
             continue
-        path = config.REPO_ROOT / item["path"]
+        path = config.STATE_ROOT / item["path"]
         ev = read_json(path)
         if not ev:
             continue

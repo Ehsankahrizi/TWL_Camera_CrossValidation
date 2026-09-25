@@ -13,6 +13,9 @@ from PIL import Image
 
 from . import config
 
+# Every file written in this process, so crossval.store can upload them to S3.
+WRITTEN = set()
+
 _session = requests.Session()
 _session.headers["User-Agent"] = config.USER_AGENT
 _last_call = {}
@@ -96,6 +99,7 @@ def write_json(path, data):
         json.dump(data, f, indent=2, sort_keys=False)
         f.write("\n")
     tmp.replace(path)
+    WRITTEN.add(path)
 
 
 def save_image(data, path):
@@ -114,4 +118,14 @@ def save_image(data, path):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     img.save(path, "JPEG", quality=config.JPEG_QUALITY, optimize=True)
+    WRITTEN.add(path)
     return img.width, img.height
+
+
+def image_pixels(data):
+    """Width × height of image bytes, or 0 if they are not a usable image."""
+    try:
+        img = Image.open(io.BytesIO(data))
+        return img.width * img.height if img.width >= 80 and img.height >= 60 else 0
+    except Exception:
+        return 0

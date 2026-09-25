@@ -106,7 +106,7 @@ def main():
     fc, meta = load_forecast()
     now = utcnow()
     schedule = read_json(config.SCHEDULE_PATH, {"events": []})
-    events = {x["event_id"]: read_json(config.REPO_ROOT / x["path"]) for x in schedule["events"]}
+    events = {x["event_id"]: read_json(config.STATE_ROOT / x["path"]) for x in schedule["events"]}
     events = {k: v for k, v in events.items() if v}
     run = meta.get("lastUpdated")
     print(f"Forecast run {run}: {len(fc)} HTF points with NWM data")
@@ -169,7 +169,7 @@ def main():
         "pipeline_run": run,
         # Finished events leave the schedule after 2 days; their event.json stays.
         "events": sorted(({"event_id": ev["event_id"], "kind": ev["kind"],
-                           "path": str(event_path(ev).relative_to(config.REPO_ROOT)),
+                           "path": str(event_path(ev).relative_to(config.STATE_ROOT)),
                            "capture_start": ev["window"]["capture_start"], "capture_end": ev["window"]["capture_end"],
                            "done": ev["state"]["live_done"] and ev["state"]["backfill_done"]}
                           for ev in events.values()

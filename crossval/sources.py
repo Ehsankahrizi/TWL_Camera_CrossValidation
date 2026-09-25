@@ -110,7 +110,8 @@ def usgs_near(lat, lon, km=config.CAMERA_RADIUS_KM):
             "source": "usgs", "id": c["camId"], "name": c.get("camName") or c["camId"],
             "lat": float(c["lat"]), "lon": float(c["lng"]), "distance_km": round(d, 3),
             "provider": "USGS HIVIS", "archive": True,
-            "image_dir": c.get("smallDir"), "nwis_id": c.get("nwisId"),
+            # Full-resolution frames (overlayDir); smallDir holds 720 px copies.
+            "image_dir": c.get("overlayDir") or c.get("smallDir"), "nwis_id": c.get("nwisId"),
             "page_url": f"https://apps.usgs.gov/hivis/camera/{c['camId']}",
         })
     return sorted(out, key=lambda c: c["distance_km"])
