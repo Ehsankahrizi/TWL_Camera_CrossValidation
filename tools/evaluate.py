@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Score the HTF forecast against labeled camera evidence.
 
-Each event.json has a "label" block that a person fills in after looking at the
-frames:
-    "label": {"flooding_observed": true | false | null, "confidence": "high"|"medium"|"low",
-              "labeled_by": "EK", "notes": "water over road at 00:15Z"}
+Labels come from a CSV kept next to the event folders (e.g. in the Box folder), one
+row per event, which the sync never overwrites:
+
+    event_id,flooding_observed,confidence,labeled_by,notes
+    20260924T22Z_HTF1071_exceedance,yes,high,EK,water over Shore Dr at 23:15Z
+
+flooding_observed: yes/no (or true/false, 1/0). Rows left blank are skipped. The
+"label" block inside event.json is used only for events without a CSV row.
 
 Forecast = "exceedance" events (predicted flooding) vs "control" events (predicted
 no flooding). Observation = flooding_observed. Unlabeled events are skipped, and so
@@ -15,7 +19,10 @@ captured), since their pictures do not show the forecast period.
     exceedance              hit           false alarm
     control                 miss          correct negative
 
-Usage:  python3 tools/evaluate.py [--min-confidence medium] [--csv results.csv]
+Usage:
+    python3 tools/evaluate.py --events "<Box folder>" --labels "<Box folder>/labels.csv" \
+                              [--min-confidence medium] [--csv results.csv]
+    python3 tools/evaluate.py --events "<Box folder>" --template "<Box folder>/labels.csv"
 """
 
 import argparse
@@ -27,17 +34,60 @@ ROOT = Path(__file__).resolve().parent.parent
 RANK = {"low": 0, "medium": 1, "high": 2}
 
 
+def parse_bool(v):
+    v = str(v or "").strip().lower()
+    return True if v in ("yes", "y", "true", "1") else False if v in ("no", "n", "false", "0") else None
+
+
+def read_labels(path):
+    labels = {}
+    if path and Path(path).exists():
+        with open(path, newline="") as fh:
+            for row in csv.DictReader(fh):
+                obs = parse_bool(row.get("flooding_observed"))
+                if row.get("event_id") and obs is not None:
+                    labels[row["event_id"].strip()] = {
+                        "flooding_observed": obs, "confidence": (row.get("confidence") or "low").strip().lower(),
+                        "labeled_by": row.get("labeled_by"), "notes": row.get("notes")}
+    return labels
+
+
+def write_template(events_dir, path):
+    """labels.csv with one row per event (existing rows kept), sorted by event_id."""
+    existing = {}
+    if Path(path).exists():
+        with open(path, newline="") as fh:
+            existing = {r["event_id"]: r for r in csv.DictReader(fh)}
+    fields = ["event_id", "kind", "flooding_observed", "confidence", "labeled_by", "notes"]
+    rows = []
+    for p in sorted(Path(events_dir).glob("*/*/event.json")):
+        ev = json.loads(p.read_text())
+        rows.append(existing.get(ev["event_id"]) or {"event_id": ev["event_id"], "kind": ev["kind"]})
+    with open(path, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rows)
+    print(f"{path}: {len(rows)} events ({len(rows) - len(existing)} new rows)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--events", default=str(ROOT / "events"), help="folder with <date>/<event_id>/event.json")
+    ap.add_argument("--labels", help="labels CSV (event_id, flooding_observed, confidence, labeled_by, notes)")
+    ap.add_argument("--template", help="create/extend a labels CSV with a row per event, then exit")
     ap.add_argument("--min-confidence", choices=RANK, default="low")
     ap.add_argument("--csv", help="also write one row per labeled event")
     args = ap.parse_args()
+    if args.template:
+        write_template(args.events, args.template)
+        return
+    csv_labels = read_labels(args.labels)
 
     rows, counts = [], {"hit": 0, "false_alarm": 0, "miss": 0, "correct_negative": 0}
     skipped_stale = 0
-    for path in sorted((ROOT / "events").glob("*/*/event.json")):
+    for path in sorted(Path(args.events).glob("*/*/event.json")):
         ev = json.loads(path.read_text())
-        lab = ev.get("label") or {}
+        lab = csv_labels.get(ev["event_id"]) or ev.get("label") or {}
         obs = lab.get("flooding_observed")
         if obs is None or RANK.get(lab.get("confidence") or "low", 0) < RANK[args.min_confidence]:
             continue
