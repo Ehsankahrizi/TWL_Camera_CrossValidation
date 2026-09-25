@@ -92,7 +92,6 @@ def new_event(kind, entry, start, end, pad_min, cams):
         "captures": [],
         "state": {"live_done": not any(not c["archive"] for c in cams),
                   "backfill_done": not any(c["archive"] for c in cams)},
-        "label": {"flooding_observed": None, "confidence": None, "labeled_by": None, "notes": ""},
     }
 
 
