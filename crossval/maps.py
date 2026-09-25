@@ -37,8 +37,21 @@ _tiles = {}
 TILE_CACHE = os.environ.get("TILE_CACHE", "/tmp/crossval_tiles")   # reused across cycles
 
 
+FONT_FAMILY = ["Arial", "Liberation Sans", "Helvetica", "DejaVu Sans"]   # Liberation Sans = Arial metrics
+_fonts = {}
+
+
 def font(size, bold=False):
-    return ImageFont.load_default(size=size)
+    """Same typeface as the chart (Arial, or Liberation Sans in the container)."""
+    key = (size, bold)
+    if key not in _fonts:
+        try:
+            from matplotlib import font_manager as fm
+            path = fm.findfont(fm.FontProperties(family=FONT_FAMILY, weight="bold" if bold else "normal"))
+            _fonts[key] = ImageFont.truetype(path, size)
+        except Exception:
+            _fonts[key] = ImageFont.load_default(size=size)
+    return _fonts[key]
 
 
 def world_px(lat, lon, z):
@@ -117,7 +130,15 @@ def local_time(ts, tz):
     return dt.strftime("%Y-%m-%d %H:%M %Z")
 
 
-CHART_H = 470                        # bottom panel height (px); width = map width
+CHART_H = 600                        # bottom panel height (px); width = map width
+CHART_STYLE = {
+    "font.family": "sans-serif", "font.sans-serif": FONT_FAMILY, "font.size": 12,
+    "axes.titlesize": 15, "axes.titleweight": "bold", "axes.labelsize": 14, "axes.labelweight": "bold",
+    "axes.linewidth": 1.3, "xtick.labelsize": 12, "ytick.labelsize": 12,
+    "xtick.direction": "in", "ytick.direction": "in", "xtick.top": True, "ytick.right": True,
+    "xtick.major.size": 6, "ytick.major.size": 6, "xtick.major.width": 1.2, "ytick.major.width": 1.2,
+    "legend.fontsize": 12, "grid.linewidth": 0.6,
+}
 
 def chart(ev, cam, image_times, width, height):
     """Bottom panel: forecast time series with threshold, HTF period and image times."""
@@ -133,6 +154,7 @@ def chart(ev, cam, image_times, width, height):
         pass
     to_dt = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))
     thr = ev["threshold_ft_mhhw"]
+    plt.rcParams.update(CHART_STYLE)
     fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
     runs = [f for f in ev["forecasts"] if f.get("series_ft_mhhw")]
     for f in runs[:-1]:                                                 # earlier runs, faint
@@ -144,11 +166,11 @@ def chart(ev, cam, image_times, width, height):
         t, v = [to_dt(p["t"]) for p in s], [p["v"] for p in s]
         ax.fill_between(t, v, thr, where=[x >= thr for x in v], interpolate=True, color="#dc2626", alpha=0.35,
                         label="Forecast above threshold")
-        ax.plot(t, v, color="#2563eb", lw=2.2, marker="o", ms=4, label="Mean NWM TWL forecast (latest run)")
+        ax.plot(t, v, color="#2563eb", lw=2.6, marker="o", ms=5, label="Mean NWM TWL forecast (latest run)")
     w = ev["window"]
     ax.axvspan(to_dt(w["start"]), to_dt(w["end"]) if w["end"] != w["start"] else to_dt(w["end"]) + (to_dt(w["end"]) - to_dt(w["start"])),
                color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
-    ax.axhline(thr, color="#9333ea", ls="--", lw=1.8, label=f"HTF threshold {thr:.2f} ft")
+    ax.axhline(thr, color="#9333ea", ls="--", lw=2.2, label=f"HTF threshold ({thr:.2f} ft)")
     # y range from every plotted value and the threshold (explicit, so nothing is clipped)
     vals = [p["v"] for f in runs for p in f["series_ft_mhhw"]] + [thr]
     lo, hi = min(vals), max(vals)
@@ -157,31 +179,34 @@ def chart(ev, cam, image_times, width, height):
     times = sorted(set(image_times))
     fmt = lambda d: d.astimezone(tz).strftime("%H:%M") if tz else d.strftime("%H:%M")
     for i, it in enumerate(times):
-        ax.axvline(it, color="#15803d", lw=1.2, alpha=0.9, label=f"Image captured ({len(times)})" if i == 0 else None)
+        ax.axvline(it, color="#15803d", lw=1.5, alpha=0.9, label=f"Image captured (n = {len(times)})" if i == 0 else None)
     if times:
         top = hi + pad * 1.6
-        ax.plot(times, [top] * len(times), "v", color="#15803d", ms=8, clip_on=False)
+        ax.plot(times, [top] * len(times), "v", color="#15803d", ms=10, clip_on=False)
         xs = [to_dt(p["t"]) for f in runs for p in f["series_ft_mhhw"]] + times
         span = (max(xs) - min(xs)).total_seconds() or 1
         gaps = [(b - a).total_seconds() for a, b in zip(times, times[1:])]
         if len(times) <= 4 and all(g > span / 10 for g in gaps):   # few, well apart: label each
             for it in times:
-                ax.annotate(fmt(it), (it, top), xytext=(0, 9), textcoords="offset points",
-                            ha="center", fontsize=8, color="#15803d")
+                ax.annotate(fmt(it), (it, top), xytext=(0, 10), textcoords="offset points",
+                            ha="center", fontsize=11, fontweight="bold", color="#15803d")
         else:                                                # many: one summary box
             ax.annotate(f"{len(times)} images: {fmt(times[0])}–{fmt(times[-1])}", (times[len(times) // 2], top),
-                        xytext=(0, 9), textcoords="offset points", ha="center", fontsize=9, color="#15803d",
-                        bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#15803d", lw=0.8))
+                        xytext=(0, 10), textcoords="offset points", ha="center", fontsize=11, fontweight="bold",
+                        color="#15803d", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#15803d", lw=1))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = datetime.now(tz).strftime("%Z") if tz else "UTC"
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
-    ax.set_ylabel("Total water level (ft above MHHW)")
+    ax.set_ylabel("TWL (ft above MHHW)")
     run = runs[-1].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
-    ax.set_title(f"TWL forecast at HTF point {ev['htf_id']} vs. images from this camera  ·  "
-                 f"NWM run {run} UTC  ·  mean of {len(ev.get('nwm_stations') or [])} NWM station(s) within 5 km",
-                 fontsize=10, pad=24 if times else 10)
-    ax.grid(alpha=0.3)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, fontsize=8.5, frameon=False)
+    n_st = len(ev.get("nwm_stations") or [])
+    ax.set_title(f"(b) NWM total water level forecast at HTF point {ev['htf_id']}", loc="left",
+                 pad=30 if times else 12)
+    ax.set_title(f"NWM run {run} UTC · mean of {n_st} station{'s' if n_st != 1 else ''} ≤ 5 km", loc="right",
+                 fontsize=11, fontweight="normal", color="0.3", pad=30 if times else 12)
+    ax.grid(alpha=0.35)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=3, frameon=False,
+              handlelength=2.2, columnspacing=1.6)
     fig.tight_layout()
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.15)
@@ -214,20 +239,20 @@ def render(ev, cam, out_path, image_times=None):
     marker(d, cp, cam["source"])
     dist = f"{cam['distance_km']:.2f} km"
     mid = ((hp[0] + cp[0]) / 2, (hp[1] + cp[1]) / 2)
-    tb = d.textbbox(mid, dist, font=font(20), anchor="mm")
-    d.rounded_rectangle([tb[0] - 8, tb[1] - 5, tb[2] + 8, tb[3] + 5], 6, fill=(255, 255, 255, 235), outline=COLORS["line"])
-    d.text(mid, dist, font=font(20), fill=COLORS["line"], anchor="mm")
+    tb = d.textbbox(mid, dist, font=font(22, bold=True), anchor="mm")
+    d.rounded_rectangle([tb[0] - 9, tb[1] - 6, tb[2] + 9, tb[3] + 6], 6, fill=(255, 255, 255, 240), outline=COLORS["line"], width=2)
+    d.text(mid, dist, font=font(22, bold=True), fill=COLORS["line"], anchor="mm")
 
     # title
     w = ev["window"]
     title = f"{ev['event_id']}"
     sub = f"HTF period {local_time(w['start'], ev.get('time_zone'))} to {local_time(w['end'], ev.get('time_zone'))}"
-    d.rectangle([0, 0, W, 62], fill=(255, 255, 255, 235))
-    d.text((16, 8), title, font=font(22), fill=(20, 20, 20))
-    d.text((16, 36), sub, font=font(16), fill=(70, 70, 70))
+    d.rectangle([0, 0, W, 74], fill=(255, 255, 255, 240))
+    d.text((16, 8), f"(a) {title}", font=font(24, bold=True), fill=(15, 15, 15))
+    d.text((16, 42), sub, font=font(18), fill=(60, 60, 60))
 
     # legend
-    lx, ly = 16, 80
+    lx, ly = 16, 92
     items = [
         ("htf", f"HTF point {ev['htf_id']}  ({lat:.4f}, {lon:.4f})",
          f"threshold {ev['threshold_ft_mhhw']:.2f} ft ({ev['threshold_m_mhhw']:.3f} m) above MHHW"),
@@ -235,8 +260,8 @@ def render(ev, cam, out_path, image_times=None):
         (cam["source"], f"{SOURCE_NAME.get(cam['source'], cam['source'])}: {cam['id']}", (cam.get("name") or "")[:52]),
         ("line", f"Distance from HTF point to camera: {dist}", None),
     ]
-    box_h = 20 + sum(46 if s else 30 for _, _, s in items)
-    d.rounded_rectangle([lx, ly, lx + 520, ly + box_h], 8, fill=(255, 255, 255, 240), outline=(150, 150, 150))
+    box_h = 22 + sum(52 if s else 34 for _, _, s in items)
+    d.rounded_rectangle([lx, ly, lx + 600, ly + box_h], 8, fill=(255, 255, 255, 242), outline=(120, 120, 120), width=2)
     y = ly + 14
     for kind, text, sub_text in items:
         sym = (lx + 26, y + 11)
@@ -248,26 +273,27 @@ def render(ev, cam, out_path, image_times=None):
             d.line([(sym[0] - 14, sym[1]), (sym[0] + 14, sym[1])], fill=COLORS["line"], width=4)
         else:
             marker(d, sym, kind, size=10)
-        d.text((lx + 52, y), text, font=font(17), fill=(20, 20, 20))
+        d.text((lx + 54, y), text, font=font(19, bold=True), fill=(20, 20, 20))
         if sub_text:
-            d.text((lx + 52, y + 21), sub_text, font=font(14), fill=(90, 90, 90))
-        y += 46 if sub_text else 30
+            d.text((lx + 54, y + 24), sub_text, font=font(16), fill=(80, 80, 80))
+        y += 52 if sub_text else 34
 
     # scale bar (1 or 2 km) and north arrow
     mpp = metres_per_px(lat, z)
     km = 2 if 2000 / mpp < 260 else 1
     bar = km * 1000 / mpp
-    bx, by = W - 40 - bar, H - 60
-    d.rectangle([bx - 10, by - 30, W - 30, by + 16], fill=(255, 255, 255, 230))
-    d.rectangle([bx, by, bx + bar, by + 8], fill=(30, 30, 30))
-    d.rectangle([bx + bar / 2, by, bx + bar, by + 8], fill="white", outline=(30, 30, 30))
-    d.text((bx, by - 24), f"0      {km / 2:g}      {km} km", font=font(14), fill=(30, 30, 30))
-    nx, ny = W - 50, 100
-    d.polygon([(nx, ny - 26), (nx + 12, ny + 8), (nx, ny), (nx - 12, ny + 8)], fill=(30, 30, 30))
-    d.text((nx, ny + 22), "N", font=font(18), fill=(30, 30, 30), anchor="mm")
+    bx, by = W - 60 - bar, H - 62
+    d.rectangle([bx - 22, by - 36, W - 22, by + 20], fill=(255, 255, 255, 235))
+    d.rectangle([bx, by, bx + bar, by + 10], fill=(30, 30, 30))
+    d.rectangle([bx + bar / 2, by, bx + bar, by + 10], fill="white", outline=(30, 30, 30), width=2)
+    for frac, lab in ((0, "0"), (0.5, f"{km / 2:g}"), (1, f"{km} km")):
+        d.text((bx + bar * frac, by - 6), lab, font=font(16, bold=True), fill=(30, 30, 30), anchor="mb")
+    nx, ny = W - 50, 112
+    d.polygon([(nx, ny - 28), (nx + 13, ny + 9), (nx, ny), (nx - 13, ny + 9)], fill=(30, 30, 30))
+    d.text((nx, ny + 26), "N", font=font(20, bold=True), fill=(30, 30, 30), anchor="mm")
 
     # attribution
-    d.text((W - 10, H - 8), ATTRIBUTION, font=font(12), fill=(60, 60, 60), anchor="rd")
+    d.text((W - 10, H - 6), ATTRIBUTION, font=font(12), fill=(60, 60, 60), anchor="rd")
 
     panel = chart(ev, cam, image_times or [], W, CHART_H)
     both = Image.new("RGB", (W, H + panel.height), "white")
