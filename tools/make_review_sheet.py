@@ -57,6 +57,7 @@ COLUMNS = [
     ("Last image (local)", 20, "last_local"),
     ("Old images to ignore", 11, "n_stale"),
     ("Image folder", 30, "folder"),
+    ("Location map", 12, "map"),
     ("Has the image flooded?", 14, "answer"),
     ("Notes (optional)", 40, "notes"),
     ("Event type (hidden)", 14, "kind"),
@@ -109,7 +110,8 @@ def collect_rows(events_dir):
                 "distance_km": cam.get("distance_km"),
                 "n_images": len(caps), "first_local": local(times[0], tz), "last_local": local(times[-1], tz),
                 "n_stale": sum(1 for c in caps if c.get("stale")),
-                "folder": str(folder), "kind": ev["kind"],
+                "folder": str(folder), "map": "map.png" if (Path(events_dir) / folder / "map.png").exists() else "",
+                "kind": ev["kind"],
             })
     rows.sort(key=lambda r: (r["start_utc"], r["htf_id"], r["distance_km"] if r["distance_km"] is not None else 99))
     return rows
@@ -172,6 +174,8 @@ def build(events_dir, out_path, include_controls=False):
                                  "(frozen or slow cameras). Judge by the other photos."),
         ("One row per camera", "An event can have several cameras. Judge each camera by its own photos; a camera "
                                "that cannot see the flooded area can be N while another is Y."),
+        ("Location map", "Each camera folder has map.png showing the HTF point, the 5 km search radius, the camera "
+                         "and the distance between them (click 'Open map')."),
         ("", None),
         ("Example row (filled in)", None),
     ]
@@ -213,6 +217,10 @@ def build(events_dir, out_path, include_controls=False):
         link = ws.cell(row=r_i, column=COL["folder"])
         link.hyperlink = row["folder"]
         link.font = Font(name=FONT, size=10, color="0563C1", underline="single")
+        if row["map"]:
+            m = ws.cell(row=r_i, column=COL["map"], value="Open map")
+            m.hyperlink = f"{row['folder']}/map.png"
+            m.font = Font(name=FONT, size=10, color="0563C1", underline="single")
         ws.cell(row=r_i, column=COL["distance_km"]).number_format = "0.0"
         for key in ("answer", "notes"):
             ws.cell(row=r_i, column=COL[key]).fill = YELLOW
