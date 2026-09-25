@@ -76,14 +76,22 @@ Each event gets one folder, with the same layout in S3 (`s3://bil6-twl-camera-cr
       map.png
 ```
 
-Each camera folder also has **`map.png`**, a zoomed street map drawn when the camera gets its first frame. It shows:
+Each camera folder also has **`map.png`**, a two-panel figure that is redrawn every time the camera saves a frame.
+
+**Left panel: zoomed street map**
 - the HTF point (ID, coordinates, threshold);
 - the 5 km search radius;
 - the camera;
 - a line with the distance from the HTF point to the camera;
 - a legend, scale bar and north arrow.
 
-To add maps to folders created before this feature, run `python3 -m crossval.maps --events "$BOX"`.
+**Right panel: forecast time series, like the iOS app**
+- the mean NWM TWL forecast for the HTF point (ft above MHHW), with earlier forecast runs shown faintly;
+- the HTF threshold, and the part of the forecast above it shaded red;
+- the HTF period highlighted;
+- a green marker at every time this camera captured an image. Times are labeled individually when there is room; otherwise a summary box gives the count and time span.
+
+To draw or redraw maps for existing folders, run `python3 -m crossval.maps --events "$BOX" --force`.
 
 **Event ID:** `<window start, UTC hour>_HTF<point id>_<exceedance|control>`
 

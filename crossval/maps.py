@@ -1,8 +1,10 @@
-"""Location map (map.png) for each camera folder.
+"""Location map + forecast chart (map.png) for each camera folder.
 
-Shows the HTF point, the camera-search radius, the camera, a line between them with
-the distance, a legend, a scale bar and a north arrow, on an Esri street basemap.
-Rendered with Pillow from web-mercator tiles, so no GIS libraries are needed.
+Left panel: the HTF point, the camera-search radius, the camera, a line between them
+with the distance, a legend, a scale bar and a north arrow, on an Esri street basemap
+(Pillow, web-mercator tiles). Right panel: the mean NWM TWL forecast for the HTF point
+(ft above MHHW) with the threshold, the part above it shaded as in the iOS app, the
+HTF period, earlier forecast runs, and a marker at every image this camera captured.
 
 Usage (existing folders):  python -m crossval.maps --events "<folder with <date>/<event_id>/event.json>"
 """
@@ -11,6 +13,8 @@ import argparse
 import io
 import json
 import math
+import os
+import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -30,6 +34,7 @@ SOURCE_NAME = {"traffic": "Traffic camera (state DOT)", "usgs": "USGS river/coas
                "windy": "Windy webcam", "webcoos": "WebCOOS coastal camera"}
 
 _tiles = {}
+TILE_CACHE = os.environ.get("TILE_CACHE", "/tmp/crossval_tiles")   # reused across cycles
 
 
 def font(size, bold=False):
@@ -52,9 +57,16 @@ def metres_per_px(lat, z):
 def tile(z, x, y):
     key = (z, x, y)
     if key not in _tiles:
-        r = http_get(TILE_URL.format(z=z, x=x, y=y), timeout=20, retries=2)
+        cached = Path(TILE_CACHE) / f"{z}/{x}/{y}.png"
+        data = cached.read_bytes() if cached.exists() else None
+        if data is None:
+            r = http_get(TILE_URL.format(z=z, x=x, y=y), timeout=20, retries=2)
+            data = r.content if r is not None and r.ok else None
+            if data:
+                cached.parent.mkdir(parents=True, exist_ok=True)
+                cached.write_bytes(data)
         try:
-            _tiles[key] = Image.open(io.BytesIO(r.content)).convert("RGB") if r is not None and r.ok else None
+            _tiles[key] = Image.open(io.BytesIO(data)).convert("RGB") if data else None
         except Exception:
             _tiles[key] = None
     return _tiles[key]
@@ -105,8 +117,80 @@ def local_time(ts, tz):
     return dt.strftime("%Y-%m-%d %H:%M %Z")
 
 
-def render(ev, cam, out_path):
-    """Draw map.png for one camera of one event. Returns the path or None on failure."""
+def chart(ev, cam, image_times, height):
+    """Right panel: forecast time series with threshold, HTF period and image times."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
+    tz = None
+    try:
+        tz = ZoneInfo(ev["time_zone"]) if ev.get("time_zone") else None
+    except Exception:
+        pass
+    to_dt = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))
+    thr = ev["threshold_ft_mhhw"]
+    fig, ax = plt.subplots(figsize=(7.5, height / 100), dpi=100)
+    runs = [f for f in ev["forecasts"] if f.get("series_ft_mhhw")]
+    for f in runs[:-1]:                                                 # earlier runs, faint
+        s = f["series_ft_mhhw"]
+        ax.plot([to_dt(p["t"]) for p in s], [p["v"] for p in s], color="0.6", lw=1, alpha=0.6,
+                label="Earlier forecast runs" if f is runs[0] else None)
+    if runs:
+        s = runs[-1]["series_ft_mhhw"]
+        t, v = [to_dt(p["t"]) for p in s], [p["v"] for p in s]
+        ax.fill_between(t, v, thr, where=[x >= thr for x in v], interpolate=True, color="#dc2626", alpha=0.35,
+                        label="Forecast above threshold")
+        ax.plot(t, v, color="#2563eb", lw=2.2, marker="o", ms=4, label="Mean NWM TWL forecast (latest run)")
+    w = ev["window"]
+    ax.axvspan(to_dt(w["start"]), to_dt(w["end"]) if w["end"] != w["start"] else to_dt(w["end"]) + (to_dt(w["end"]) - to_dt(w["start"])),
+               color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
+    ax.axhline(thr, color="#9333ea", ls="--", lw=1.8, label=f"HTF threshold {thr:.2f} ft")
+    # y range from every plotted value and the threshold (explicit, so nothing is clipped)
+    vals = [p["v"] for f in runs for p in f["series_ft_mhhw"]] + [thr]
+    lo, hi = min(vals), max(vals)
+    pad = max(0.1, (hi - lo) * 0.12)
+    ax.set_ylim(lo - pad, hi + pad * 1.6)
+    times = sorted(set(image_times))
+    fmt = lambda d: d.astimezone(tz).strftime("%H:%M") if tz else d.strftime("%H:%M")
+    for i, it in enumerate(times):
+        ax.axvline(it, color="#15803d", lw=1.2, alpha=0.9, label=f"Image captured ({len(times)})" if i == 0 else None)
+    if times:
+        top = hi + pad * 1.6
+        ax.plot(times, [top] * len(times), "v", color="#15803d", ms=8, clip_on=False)
+        xs = [to_dt(p["t"]) for f in runs for p in f["series_ft_mhhw"]] + times
+        span = (max(xs) - min(xs)).total_seconds() or 1
+        gaps = [(b - a).total_seconds() for a, b in zip(times, times[1:])]
+        if len(times) <= 4 and all(g > span / 10 for g in gaps):   # few, well apart: label each
+            for it in times:
+                ax.annotate(fmt(it), (it, top), xytext=(0, 9), textcoords="offset points",
+                            ha="center", fontsize=8, color="#15803d")
+        else:                                                # many: one summary box
+            ax.annotate(f"{len(times)} images: {fmt(times[0])}–{fmt(times[-1])}", (times[len(times) // 2], top),
+                        xytext=(0, 9), textcoords="offset points", ha="center", fontsize=9, color="#15803d",
+                        bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#15803d", lw=0.8))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
+    zone = datetime.now(tz).strftime("%Z") if tz else "UTC"
+    ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
+    ax.set_ylabel("Total water level (ft above MHHW)")
+    run = runs[-1].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
+    ax.set_title(f"TWL forecast at HTF point {ev['htf_id']} vs. images from this camera\n"
+                 f"NWM run {run} UTC · mean of {len(ev.get('nwm_stations') or [])} NWM station(s) within 5 km",
+                 fontsize=10, pad=24 if times else 10)
+    ax.grid(alpha=0.3)
+    ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png")
+    plt.close(fig)
+    buf.seek(0)
+    return Image.open(buf).convert("RGB")
+
+
+def render(ev, cam, out_path, image_times=None):
+    """Draw map.png (map + forecast chart) for one camera of one event.
+    image_times: datetimes of this camera's images. Returns the path or None on failure."""
     lat, lon, radius_km = ev["lat"], ev["lon"], config.CAMERA_RADIUS_KM
     z = max(10, min(15, math.floor(math.log2(156543.03392 * math.cos(math.radians(lat)) * RADIUS_PX / (radius_km * 1000)))))
     img, (x0, y0) = basemap(lat, lon, z)
@@ -180,9 +264,13 @@ def render(ev, cam, out_path):
     # attribution
     d.text((W - 10, H - 8), ATTRIBUTION, font=font(12), fill=(60, 60, 60), anchor="rd")
 
+    panel = chart(ev, cam, image_times or [], H)
+    both = Image.new("RGB", (W + panel.width, max(H, panel.height)), "white")
+    both.paste(img, (0, 0))
+    both.paste(panel, (W, 0))
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(out_path, "PNG", optimize=True)
+    both.save(out_path, "PNG", optimize=True)
     return out_path
 
 
@@ -201,7 +289,11 @@ def main():
         for folder in sorted(d for d in p.parent.iterdir() if d.is_dir() and any(d.glob("*.jpg"))):
             cam = by_folder.get(folder.name)
             out = folder / "map.png"
-            if cam and (args.force or not out.exists()) and render(ev, cam, out):
+            if not cam or not (args.force or not out.exists()):
+                continue
+            times = {datetime.fromisoformat(re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00+00:00", f.stem))
+                     for f in folder.glob("*.jpg")}
+            if render(ev, cam, out, sorted(times)):
                 made += 1
     print(f"drew {made} maps")
 
