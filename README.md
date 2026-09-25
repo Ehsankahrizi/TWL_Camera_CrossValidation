@@ -273,6 +273,32 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 
 ## Label and evaluate
 
+### Review workbook (for student reviewers)
+
+`HTF_camera_review.xlsx` in the Box folder has one row per **event × camera**. Each row has:
+- the HTF period in local time and UTC;
+- the HTF ID and location;
+- the camera source, ID, name and distance;
+- the number of images, and how many are too old to use;
+- a link to the camera's image folder;
+- a yellow **Has the image flooded?** cell (Y/N drop-down) and optional notes.
+
+The **Instructions** sheet explains what counts as flooded, and the **Progress** sheet counts answered rows. Whether an event is a forecast exceedance or a control is kept in a hidden column, so the reviewer is not biased.
+
+Create or refresh it. Answers already typed are kept, matched by event and camera. Close the file in Excel first:
+
+```bash
+python3 tools/make_review_sheet.py --events "$BOX"
+```
+
+Score from it: an event counts as flooded if any camera is Y, and as not flooded if its answered cameras are all N.
+
+```bash
+python3 tools/evaluate.py --events "$BOX" --review "$BOX/HTF_camera_review.xlsx" --csv "$BOX/results.csv"
+```
+
+### Per-event labels (`labels.csv`)
+
 `event.json` files are rewritten as frames arrive, so labels live in a separate **`labels.csv`** in the Box folder. The sync never touches it.
 
 1. Create or extend the sheet. This adds a row for every event and keeps rows you already filled:
