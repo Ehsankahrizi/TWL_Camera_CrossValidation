@@ -19,7 +19,7 @@ Our lab runs an app that **forecasts high tide flooding (HTF)** along the US coa
 ```
 TWL_CrossValidation_captures/
 ├── HTF_camera_review.xlsx      ← the only file you edit
-├── README_for_reviewers.md     ← this guide
+├── Reviewer_Guide.docx         ← this guide
 ├── 2026-09-24/                 ← one folder per date
 │   └── 20260924T22Z_HTF1071_exceedance/     ← one folder per event
 │       ├── event.json                        ← technical details (you can ignore it)
