@@ -25,7 +25,9 @@ BACKFILL_DELAY_MIN = 60                 # wait this long after a window closes b
 ARCHIVE_FRAME_STEP_MIN = 15             # keep at most one archived frame per this many minutes
 
 # ── Control cases (forecast BELOW threshold) ──
-CONTROL_MAX_PER_RUN = 15                # sampled per forecast run, nearest-to-threshold first
+# Off by default: only forecast exceedance periods are captured. Set to e.g. 15 to also
+# sample below-threshold points (needed to measure missed floods / POD).
+CONTROL_MAX_PER_RUN = int(os.environ.get("CONTROL_MAX_PER_RUN", "0"))
 CONTROL_WINDOW_HALF_MIN = 60            # capture ±60 min around the forecast peak
 
 # ── Images ──

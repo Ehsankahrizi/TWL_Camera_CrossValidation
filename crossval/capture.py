@@ -222,6 +222,14 @@ def main():
         s, e = parse_time(ev["window"]["capture_start"]), parse_time(ev["window"]["capture_end"])
         changed = False
 
+        if ev["kind"] == "control" and config.CONTROL_MAX_PER_RUN == 0:
+            # Controls are switched off: stop capturing any still in the schedule.
+            ev["state"]["live_done"] = ev["state"]["backfill_done"] = True
+            add_local_window(ev)
+            write_json(path, ev)
+            item["done"] = True
+            continue
+
         if not ev["state"]["live_done"]:
             if s - timedelta(minutes=5) <= now <= e + timedelta(minutes=5):
                 active += 1

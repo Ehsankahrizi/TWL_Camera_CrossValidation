@@ -3,7 +3,7 @@
 This repo automatically collects **camera evidence for every high tide flooding (HTF) forecast** made by the [Coastal HTF Forecast](https://github.com/Ehsankahrizi/coastal-twl-app) pipeline and iOS app. The images can then be used to check whether the forecasts were right.
 
 - **Exceedance events:** whenever the app forecasts that the total water level (TWL) at an HTF point will reach its threshold, this repo finds cameras within **5 km** of that point. It records frames from them during the forecast window.
-- **Control events:** a sample of points forecast to stay **below** their threshold is recorded the same way. Controls are what reveal *missed* floods, not just false alarms.
+- **Control events (off by default):** a sample of points forecast to stay **below** their threshold can be recorded the same way (`CONTROL_MAX_PER_RUN`, e.g. `15`). Controls are what reveal *missed* floods. With them off, the evaluation measures hits and false alarms only.
 
 A person labels the collected frames (flooding seen: yes/no), and `tools/evaluate.py` turns the labels into forecast skill scores.
 
@@ -21,7 +21,7 @@ flowchart TD
     subgraph ECS["Amazon ECS service bil6-twl-camera-crossval · crossval/runner.py (always on)"]
         subgraph PLAN["① Plan — 01:50 / 07:50 / 13:50 / 19:50 UTC"]
             P1["For each HTF point: hours with TWL ≥ threshold<br/>(runs < 3 h apart merged) → exceedance window"]
-            P2["Sample ≤ 15 points forecast BELOW threshold,<br/>nearest to it first → control window at forecast peak"]
+            P2["Optional (off by default): sample points forecast BELOW threshold<br/>→ control window at forecast peak"]
             P3["Find cameras ≤ 5 km:<br/>traffic/511 · USGS HIVIS · Windy · WebCOOS*"]
             P4["Same point + overlapping window already planned?<br/>→ update it, add new cameras, keep each run's forecast"]
             P1 --> P3
@@ -275,7 +275,7 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 
 ### Review workbook (for student reviewers)
 
-`HTF_camera_review.xlsx` in the Box folder has one row per **event × camera**. Each row has:
+`HTF_camera_review.xlsx` in the Box folder has one row per **forecast exceedance event × camera** (`--include-controls` adds control events). Each row has:
 - the HTF period in local time and UTC;
 - the HTF ID and location;
 - the camera source, ID, name and distance;
@@ -332,7 +332,7 @@ All tunable values are in `crossval/config.py`:
 | Live capture interval | 15 min |
 | Archive frame spacing | 15 min |
 | Stale threshold | 30 min |
-| Control events per forecast run | 15 |
+| Control events per forecast run | 0 (off; env `CONTROL_MAX_PER_RUN`) |
 | Image width | ≤ 1920 px |
 
 ## Limitations
@@ -340,4 +340,4 @@ All tunable values are in `crossval/config.py`:
 - **Traffic cameras:** some states' video streams refuse outside players. For those cameras the agency snapshot is saved (`method: snapshot`). A few agency servers don't report when a snapshot was taken (`image_time_basis: unknown`).
 - **Windy:** free-tier images are 400 × 224 px and typically 5–15 minutes old when fetched.
 - **Camera coverage:** many HTF points have no camera within 5 km. They are skipped because there is no evidence to collect.
-- **Controls:** control points are chosen nearest to their threshold, which is the most informative for misses but not a random sample. Scores from controls are therefore not coast-wide rates.
+- **Controls:** off by default, so misses (flooding that was not forecast) are not measured, and POD cannot be computed. If they are turned on, control points are chosen nearest to their threshold, which is not a random sample.
