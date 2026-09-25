@@ -7,7 +7,7 @@ Only forecast exceedance events are listed (the HTF periods the iOS app reported
 For every event folder with captured frames, each camera gets a row with the HTF
 period (the forecast hours at/above threshold, local time and UTC), the HTF point,
 the camera and its distance, a link to its image folder, and a yellow
-"Has the image flooded?" cell (Y/N drop-down) plus optional notes.
+"Has the image flooded?" cell (drop-down: Yes / No / NaN / Invalid) plus optional notes.
 
 Re-run it whenever new events arrive: rows are regenerated, but answers already
 typed (matched by event, source and camera) are kept. Whether an event is a forecast
@@ -34,6 +34,8 @@ FONT = "Arial"
 YELLOW = PatternFill("solid", start_color="FFFF00")
 HEADER_FILL = PatternFill("solid", start_color="1F4E78")
 THIN = Side(style="thin", color="BFBFBF")
+ANSWERS = ["Yes", "No", "NaN", "Invalid"]   # only Yes/No are scored; NaN and Invalid are excluded
+OLD_ANSWERS = {"Y": "Yes", "N": "No"}          # answers typed in earlier versions of the sheet
 SOURCE_NAME = {"traffic": "Traffic camera (state DOT)", "usgs": "USGS river/coast camera",
                "windy": "Windy webcam", "webcoos": "WebCOOS coastal camera"}
 
@@ -136,8 +138,9 @@ def previous_answers(path):
     out = {}
     for r in ws.iter_rows(min_row=2, values_only=True):
         if r[head["Event ID"]]:
+            ans = r[head["Has the image flooded?"]]
             out[(r[head["Event ID"]], r[head["Camera source"]], str(r[head["Camera ID"]]))] = (
-                r[head["Has the image flooded?"]], r[head["Notes (optional)"]])
+                OLD_ANSWERS.get(str(ans).strip().upper(), ans) if ans is not None else None, r[head["Notes (optional)"]])
     return out
 
 
@@ -166,14 +169,16 @@ def build(events_dir, out_path, include_controls=False):
         ("", None),
         ("Your task", "For each row on the Review sheet, open the image folder (click the link) and look at the photos "
                       "taken during the HTF period. Decide whether coastal water has flooded land that is normally dry."),
-        ("What to fill in", "Only the YELLOW cells on the Review sheet: 'Has the image flooded?' (Y or N) and, "
-                            "if useful, 'Notes (optional)'. Do not edit any other column."),
-        ("Y = flooded", "Water on a road, sidewalk, parking lot or yard; water over a seawall, bulkhead or dock; "
-                        "standing water that is not there in the same camera's photos at other times."),
-        ("N = not flooded", "Water stays in its normal channel, bay or beach; waves on the sand that do not reach "
-                            "roads or buildings; a road that is only wet from rain (no standing or moving water)."),
-        ("Leave blank", "If no photo can be judged (all dark, fog, blurred, or the camera points away from the water). "
-                        "Blank rows are not counted; write the reason in Notes."),
+        ("What to fill in", "Only the YELLOW cells on the Review sheet: 'Has the image flooded?' (choose Yes, No, "
+                            "NaN or Invalid from the drop-down) and, if useful, 'Notes (optional)'. Do not edit any other column."),
+        ("Yes = flooded", "Water on a road, sidewalk, parking lot or yard; water over a seawall, bulkhead or dock; "
+                          "standing water that is not there in the same camera's photos at other times."),
+        ("No = not flooded", "Water stays in its normal channel, bay or beach; waves on the sand that do not reach "
+                             "roads or buildings; a road that is only wet from rain (no standing or moving water)."),
+        ("NaN = cannot be seen", "The photos cannot be judged: images missing or broken, night-time/too dark, fog, "
+                                 "rain on the lens, or blurred. Write the reason in Notes."),
+        ("Invalid = not usable", "The camera cannot show ground-level flooding, e.g. it is on a bridge or overpass far "
+                                 "above the ground, or it points away from the water and land. Write the reason in Notes."),
         ("Times", "Photo file names are UTC (e.g. 2026-09-24T23-15Z.jpg = 23:15 UTC). The Review sheet shows the HTF "
                   "period in local time and UTC. Compare photos before, during and after the period: tidal flooding "
                   "rises and then drains away."),
@@ -197,7 +202,7 @@ def build(events_dir, out_path, include_controls=False):
     ex_row = len(lines) + 1
     example = [("Event ID", "20260924T23Z_HTF1036_exceedance"), ("HTF period (local)", "2026-09-24 19:00 → 22:00 (America/New_York)"),
                ("Camera", "Traffic camera (state DOT) · VA-cam-2853 · 1.3 km"),
-               ("Has the image flooded?", "Y"), ("Notes (optional)", "Water across Shore Dr at 20:15, gone by 21:45")]
+               ("Has the image flooded?", "Yes"), ("Notes (optional)", "Water across Shore Dr at 20:15, gone by 21:45")]
     for j, (a, b) in enumerate(example):
         ins.cell(row=ex_row + j, column=1, value=a).font = Font(name=FONT, size=10)
         cb = ins.cell(row=ex_row + j, column=2, value=b)
@@ -208,8 +213,8 @@ def build(events_dir, out_path, include_controls=False):
     # ── Review ──
     ws = wb.create_sheet("Review")
     style_header(ws, [h for h, _, _ in COLUMNS], [w for _, w, _ in COLUMNS])
-    dv = DataValidation(type="list", formula1='"Y,N"', allow_blank=True,
-                        error="Please enter Y (flooded) or N (not flooded).", errorTitle="Y or N")
+    dv = DataValidation(type="list", formula1='"' + ",".join(ANSWERS) + '"', allow_blank=True,
+                        error="Choose Yes, No, NaN or Invalid from the list.", errorTitle="Has the image flooded?")
     ws.add_data_validation(dv)
     kept = 0
     for r_i, row in enumerate(rows, 2):
@@ -237,8 +242,9 @@ def build(events_dir, out_path, include_controls=False):
     ws.freeze_panes = "C2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNS))}{last}"
     ws.column_dimensions[get_column_letter(COL["kind"])].hidden = True
-    ws.cell(row=1, column=COL["answer"]).comment = Comment("Type Y if the photos show flooding during the HTF period, "
-                                                           "N if not. Leave blank if the photos cannot be judged.", "HTF review")
+    ws.cell(row=1, column=COL["answer"]).comment = Comment("Yes = flooding in the photos during the HTF period; No = none; "
+                                                           "NaN = photos cannot be judged (night, missing, fog); Invalid = camera "
+                                                           "cannot show ground flooding (e.g. on a bridge).", "HTF review")
     ws.cell(row=1, column=COL["folder"]).comment = Comment("Click to open this camera's photos (the link works when this "
                                                            "file is opened from the Box folder).", "HTF review")
 
@@ -250,16 +256,18 @@ def build(events_dir, out_path, include_controls=False):
     rng = f"Review!${a}$2:${a}${last}"
     ev_rng = f"Review!$A$2:$A${last}"
     stats = [("Rows to review (event × camera)", f'=COUNTA({ev_rng})'),
-             ("Answered Y (flooded)", f'=COUNTIF({rng},"Y")'),
-             ("Answered N (not flooded)", f'=COUNTIF({rng},"N")'),
-             ("Not answered yet", "=B2-B3-B4"),
-             ("Share done", "=IF(B2=0,0,(B3+B4)/B2)")]
+             ("Yes (flooded)", f'=COUNTIF({rng},"Yes")'),
+             ("No (not flooded)", f'=COUNTIF({rng},"No")'),
+             ("NaN (cannot be seen)", f'=COUNTIF({rng},"NaN")'),
+             ("Invalid (camera not usable)", f'=COUNTIF({rng},"Invalid")'),
+             ("Not answered yet", "=B2-B3-B4-B5-B6"),
+             ("Share done", "=IF(B2=0,0,(B2-B7)/B2)")]
     pr.cell(row=1, column=1, value="Review progress").font = Font(name=FONT, bold=True, size=14)
     for i, (label, f) in enumerate(stats, 2):
         pr.cell(row=i, column=1, value=label).font = Font(name=FONT, size=10)
         c = pr.cell(row=i, column=2, value=f)
         c.font = Font(name=FONT, size=10)
-    pr["B6"].number_format = "0%"
+    pr["B8"].number_format = "0%"
 
     wb.active = wb.sheetnames.index("Review")
     wb.calculation.fullCalcOnLoad = True       # Excel computes the Progress formulas on open

@@ -5,7 +5,7 @@ This repo automatically collects **camera evidence for every high tide flooding 
 - **Exceedance events:** whenever the app forecasts that the total water level (TWL) at an HTF point will reach its threshold, this repo finds cameras within **5 km** of that point. It records frames from them during the forecast window.
 - **Control events (off by default):** a sample of points forecast to stay **below** their threshold can be recorded the same way (`CONTROL_MAX_PER_RUN`, e.g. `15`). Controls are what reveal *missed* floods. With them off, the evaluation measures hits and false alarms only.
 
-A reviewer marks each camera's frames in an Excel workbook (flooded: Y/N), and `tools/evaluate.py` turns the answers into forecast skill scores.
+A reviewer marks each camera's frames in an Excel workbook (Yes / No / NaN / Invalid), and `tools/evaluate.py` turns the answers into forecast skill scores.
 
 The pipeline runs as an always-on container on **Amazon ECS (Fargate)** in the University of Alabama BIL6 AWS account. Frames and metadata are stored in **S3** and copied hourly into **Box** by a small app on the lab Mac.
 
@@ -46,7 +46,7 @@ flowchart TD
 
     S3 --> SYNC["③ TWLBoxSync.app on the lab Mac (hourly)<br/>aws s3 sync → Box Drive"]
     SYNC --> BOX[("Box: CamerData/TWL_CrossValidation_captures<br/>{date}/{event_id}/event.json + camera folders")]
-    BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Y / N per camera"]
+    BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Yes / No / NaN / Invalid per camera"]
     LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · success ratio · FAR"]
 ```
 
@@ -304,13 +304,22 @@ Each row has:
 - the camera source, ID, name and distance;
 - the number of images, and how many are too old to use;
 - links to the camera's image folder and its location map;
-- a yellow **Has the image flooded?** cell (Y/N drop-down) and optional notes.
+- a yellow **Has the image flooded?** cell (drop-down, see below) and optional notes.
 
 The **Instructions** sheet explains what counts as flooded, with an example row. The **Progress** sheet counts answered rows. Whether an event is a forecast exceedance or a control is kept in a hidden column, so the reviewer is not biased.
 
 ### 2. Review
 
-The reviewer opens each row's image folder, looks at the photos taken during the HTF period, and types **Y** (flooded) or **N** (not flooded). Rows where no photo can be judged are left blank. Photos listed under *Old images to ignore* show a time before the HTF period.
+The reviewer opens each row's image folder, looks at the photos taken during the HTF period, and picks one answer:
+
+| Answer | Meaning | Scored? |
+|---|---|---|
+| **Yes** | Flooded: water on a road, sidewalk, parking lot or yard, or over a seawall or dock | ✅ |
+| **No** | Not flooded: water stays in its normal channel or beach, or the road is only wet from rain | ✅ |
+| **NaN** | Cannot be seen: images missing or broken, night, fog, rain on the lens | excluded |
+| **Invalid** | Camera cannot show ground-level flooding, e.g. on a bridge or overpass high above the ground | excluded |
+
+Photos listed under *Old images to ignore* show a time before the HTF period.
 
 ### 3. Score
 
@@ -319,16 +328,16 @@ python3 tools/evaluate.py --events "$BOX" --csv "$BOX/results.csv"
 ```
 
 Per event:
-- **flooded** if **any** camera is Y;
-- **not flooded** if its answered cameras are all N;
-- **skipped** if no camera is answered, or if all its frames are stale.
+- **flooded** if **any** camera is Yes;
+- **not flooded** if its Yes/No cameras are all No (NaN and Invalid cameras are ignored);
+- **skipped** if no camera is Yes or No, or if all its frames are stale.
 
 It reports:
 - hits (flooding forecast and seen);
 - false alarms (forecast, not seen);
 - the success ratio and the false alarm ratio (FAR).
 
-Misses and POD need control events, which are off by default. `results.csv` has one row per scored event with the camera Y/N counts, the forecast peak and the threshold.
+Misses and POD need control events, which are off by default. `results.csv` has one row per scored event with the camera Yes/No counts, the forecast peak and the threshold.
 
 ---
 
