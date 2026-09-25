@@ -48,14 +48,14 @@ def frame_path(ev, cam, t):
 
 
 def ensure_map(ev, cam, rel):
-    """Draw map.png in the camera's folder the first time it gets a frame."""
-    if cam.get("map_file"):
-        return
+    """(Re)draw map.png in the camera's folder after each new frame, so the forecast
+    chart shows every image time and the latest forecast run."""
     from . import maps
     from . import util
     out = config.CAPTURE_DIR / Path(rel).parent / "map.png"
+    times = [parse_time(c.get("image_time") or c["time"]) for c in ev["captures"] if c["camera_id"] == cam["id"]]
     try:
-        if maps.render(ev, cam, out):
+        if maps.render(ev, cam, out, times):
             util.WRITTEN.add(out)
             cam["map_file"] = str(Path(rel).parent / "map.png")
     except Exception as e:                       # a map must never stop the capture
