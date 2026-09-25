@@ -96,6 +96,21 @@ def new_event(kind, entry, start, end, pad_min, cams):
     }
 
 
+def add_new_cameras(ev, entry):
+    """Attach cameras that became available since the event was planned (e.g. Windy
+    after its key was added), and reopen the capture steps they need."""
+    known = {(c["source"], c["id"]) for c in ev["cameras"]}
+    new = [c for c in cameras_near(entry["lat"], entry["lon"]) if (c["source"], c["id"]) not in known]
+    if not new:
+        return
+    ev["cameras"].extend(new)
+    if parse_time(ev["window"]["capture_end"]) > utcnow() and any(not c["archive"] for c in new):
+        ev["state"]["live_done"] = False
+    if any(c["archive"] for c in new):
+        ev["state"]["backfill_done"] = False
+    print(f"  ~ {ev['event_id']}: +{len(new)} new cameras ({', '.join(sorted({c['source'] for c in new}))})")
+
+
 def overlaps(ev, kind, htf_id, s, e):
     if ev["kind"] != kind or ev["htf_id"] != htf_id:
         return False
@@ -124,6 +139,7 @@ def main():
                 w["end"] = iso(max(parse_time(w["end"]), end))
                 w["capture_start"] = iso(min(parse_time(w["capture_start"]), s))
                 w["capture_end"] = iso(max(parse_time(w["capture_end"]), e))
+                add_new_cameras(ev, entry)
                 return ev
         cams = cameras_near(entry["lat"], entry["lon"])
         if e < now:                                        # window over: only archives can still help
