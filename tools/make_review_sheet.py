@@ -275,6 +275,29 @@ def build(events_dir, out_path, include_controls=False):
     print(f"{out_path}: {len(rows)} rows ({kept} with earlier answers kept)")
 
 
+def refresh_if_needed(events_dir, out_path=None):
+    """Rebuild the workbook only when new event × camera rows exist and it is not open.
+
+    Used by the hourly sync. Returns a short status string for the log.
+    """
+    events_dir = Path(events_dir)
+    out_path = Path(out_path or events_dir / "HTF_camera_review.xlsx")
+    lock = out_path.with_name("~$" + out_path.name)             # Excel's owner file while open
+    if lock.exists():
+        return "skipped: workbook is open in Excel (will retry next hour)"
+    wanted = {(r["event_id"], r["source"], r["camera_id"])
+              for r in collect_rows(events_dir) if r["kind"] == "exceedance"}
+    if out_path.exists():
+        have = set(previous_answers(out_path))
+        new = wanted - have
+        if not new:
+            return "unchanged: no new event/camera rows"
+    else:
+        new = wanted
+    build(events_dir, out_path)
+    return f"rebuilt: {len(new)} new row(s), earlier answers kept"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--events", required=True, help="folder with <date>/<event_id>/event.json (the Box folder)")

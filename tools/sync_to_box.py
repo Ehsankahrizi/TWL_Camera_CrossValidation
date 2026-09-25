@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Copy captured frames into a Box Drive folder, from S3 (ECS) and GitHub artifacts.
 
-ECS deployment: `aws s3 sync s3://<bucket>/events/ DEST` (same layout as below).
+ECS deployment: `aws s3 sync s3://<bucket>/events/ DEST` (same layout as below). After
+syncing, HTF_camera_review.xlsx gets rows for any new event × camera (skipped while the
+workbook is open in Excel; earlier answers are always kept).
 
 The capture workflow uploads each run's frames as an artifact ("captures-<run id>",
 kept 90 days). This script downloads every artifact not synced yet into DEST, and
@@ -54,6 +56,16 @@ def fetch_event_json(date, event_id):
         return None
 
 
+def refresh_review_sheet(dest):
+    """Add rows for new events to HTF_camera_review.xlsx (never while it is open)."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from make_review_sheet import refresh_if_needed
+        print(f"Review workbook {refresh_if_needed(dest)}")
+    except Exception as e:                       # the sync itself must not fail because of the sheet
+        print(f"Review workbook not updated: {e}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dest", required=True, help="Box Drive folder to sync into")
@@ -75,6 +87,7 @@ def main():
         if r.returncode != 0:
             raise RuntimeError(f"aws s3 sync failed: {r.stderr.strip()[:300]}")
         print(f"S3 s3://{args.s3_bucket}/events/ synced into {dest}")
+    refresh_review_sheet(dest)
     if args.no_artifacts:
         return
 
