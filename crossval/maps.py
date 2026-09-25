@@ -1,8 +1,8 @@
 """Location map + forecast chart (map.png) for each camera folder.
 
-Left panel: the HTF point, the camera-search radius, the camera, a line between them
+Top panel: the HTF point, the camera-search radius, the camera, a line between them
 with the distance, a legend, a scale bar and a north arrow, on an Esri street basemap
-(Pillow, web-mercator tiles). Right panel: the mean NWM TWL forecast for the HTF point
+(Pillow, web-mercator tiles). Bottom panel (same width, wide and short): the mean NWM TWL forecast for the HTF point
 (ft above MHHW) with the threshold, the part above it shaded as in the iOS app, the
 HTF period, earlier forecast runs, and a marker at every image this camera captured.
 
@@ -117,8 +117,10 @@ def local_time(ts, tz):
     return dt.strftime("%Y-%m-%d %H:%M %Z")
 
 
-def chart(ev, cam, image_times, height):
-    """Right panel: forecast time series with threshold, HTF period and image times."""
+CHART_H = 470                        # bottom panel height (px); width = map width
+
+def chart(ev, cam, image_times, width, height):
+    """Bottom panel: forecast time series with threshold, HTF period and image times."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.dates as mdates
@@ -131,7 +133,7 @@ def chart(ev, cam, image_times, height):
         pass
     to_dt = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))
     thr = ev["threshold_ft_mhhw"]
-    fig, ax = plt.subplots(figsize=(7.5, height / 100), dpi=100)
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
     runs = [f for f in ev["forecasts"] if f.get("series_ft_mhhw")]
     for f in runs[:-1]:                                                 # earlier runs, faint
         s = f["series_ft_mhhw"]
@@ -175,17 +177,20 @@ def chart(ev, cam, image_times, height):
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
     ax.set_ylabel("Total water level (ft above MHHW)")
     run = runs[-1].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
-    ax.set_title(f"TWL forecast at HTF point {ev['htf_id']} vs. images from this camera\n"
-                 f"NWM run {run} UTC · mean of {len(ev.get('nwm_stations') or [])} NWM station(s) within 5 km",
+    ax.set_title(f"TWL forecast at HTF point {ev['htf_id']} vs. images from this camera  ·  "
+                 f"NWM run {run} UTC  ·  mean of {len(ev.get('nwm_stations') or [])} NWM station(s) within 5 km",
                  fontsize=10, pad=24 if times else 10)
     ax.grid(alpha=0.3)
-    ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, fontsize=8.5, frameon=False)
     fig.tight_layout()
     buf = io.BytesIO()
-    fig.savefig(buf, format="png")
+    fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     buf.seek(0)
-    return Image.open(buf).convert("RGB")
+    img = Image.open(buf).convert("RGB")
+    if img.width != width:                                   # tight bbox may change the size slightly
+        img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
+    return img
 
 
 def render(ev, cam, out_path, image_times=None):
@@ -264,10 +269,10 @@ def render(ev, cam, out_path, image_times=None):
     # attribution
     d.text((W - 10, H - 8), ATTRIBUTION, font=font(12), fill=(60, 60, 60), anchor="rd")
 
-    panel = chart(ev, cam, image_times or [], H)
-    both = Image.new("RGB", (W + panel.width, max(H, panel.height)), "white")
+    panel = chart(ev, cam, image_times or [], W, CHART_H)
+    both = Image.new("RGB", (W, H + panel.height), "white")
     both.paste(img, (0, 0))
-    both.paste(panel, (W, 0))
+    both.paste(panel, (0, H))
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     both.save(out_path, "PNG", optimize=True)
