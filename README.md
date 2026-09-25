@@ -5,7 +5,7 @@ This repo automatically collects **camera evidence for every high tide flooding 
 - **Exceedance events:** whenever the app forecasts that the total water level (TWL) at an HTF point will reach its threshold, this repo finds cameras within **5 km** of that point. It records frames from them during the forecast window.
 - **Control events (off by default):** a sample of points forecast to stay **below** their threshold can be recorded the same way (`CONTROL_MAX_PER_RUN`, e.g. `15`). Controls are what reveal *missed* floods. With them off, the evaluation measures hits and false alarms only.
 
-A person labels the collected frames (flooding seen: yes/no), and `tools/evaluate.py` turns the labels into forecast skill scores.
+A reviewer marks each camera's frames in an Excel workbook (flooded: Y/N), and `tools/evaluate.py` turns the answers into forecast skill scores.
 
 The pipeline runs as an always-on container on **Amazon ECS (Fargate)** in the University of Alabama BIL6 AWS account. Frames and metadata are stored in **S3** and copied hourly into **Box** by a small app on the lab Mac.
 
@@ -46,8 +46,8 @@ flowchart TD
 
     S3 --> SYNC["③ TWLBoxSync.app on the lab Mac (hourly)<br/>aws s3 sync → Box Drive"]
     SYNC --> BOX[("Box: CamerData/TWL_CrossValidation_captures<br/>{date}/{event_id}/event.json + camera folders")]
-    BOX --> LAB["④ Person looks at the frames and fills labels.csv"]
-    LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · misses · correct negatives<br/>POD · FAR · CSI"]
+    BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Y / N per camera"]
+    LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · success ratio · FAR"]
 ```
 
 \* WebCOOS runs only if a WebCOOS token is provided (see [Credentials](#credentials)).
@@ -105,7 +105,6 @@ To add maps to folders created before this feature, run `python3 -m crossval.map
 | `cameras[]` | Cameras within 5 km: `source`, `id`, `name`, `distance_km`, `archive`, links | km |
 | `captures[]` | Every saved frame (see below) | UTC + local |
 | `state` | `live_done`, `backfill_done` | — |
-| `label` | Placeholder. Labels are kept in `labels.csv` instead (see [Label and evaluate](#label-and-evaluate)), because `event.json` is overwritten as frames arrive. | — |
 
 ### Frame timing (`captures[]`)
 
@@ -282,52 +281,54 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 
 ---
 
-## Label and evaluate
+## Review and evaluate
 
-### Review workbook (for student reviewers)
+Review answers live in one Excel workbook in the Box folder, **`HTF_camera_review.xlsx`**. The hourly sync never touches it; it only writes the event folders.
 
-`HTF_camera_review.xlsx` in the Box folder has one row per **forecast exceedance event × camera** (`--include-controls` adds control events). Each row has:
-- the HTF period in local time and UTC;
-- the HTF ID and location;
-- the camera source, ID, name and distance;
-- the number of images, and how many are too old to use;
-- a link to the camera's image folder;
-- a yellow **Has the image flooded?** cell (Y/N drop-down) and optional notes.
+```bash
+BOX="$HOME/Library/CloudStorage/Box-Box/Coastal Hydrology Lab/Ehsan's project/CamerData/TWL_CrossValidation_captures"
+```
 
-The **Instructions** sheet explains what counts as flooded, and the **Progress** sheet counts answered rows. Whether an event is a forecast exceedance or a control is kept in a hidden column, so the reviewer is not biased.
-
-Create or refresh it. Answers already typed are kept, matched by event and camera. Close the file in Excel first:
+### 1. Create or refresh the workbook
 
 ```bash
 python3 tools/make_review_sheet.py --events "$BOX"
 ```
 
-Score from it: an event counts as flooded if any camera is Y, and as not flooded if its answered cameras are all N.
+- **Rows:** one per **forecast exceedance event × camera** (`--include-controls` adds control events).
+- **Re-runs:** run it again as new events arrive. New rows are added and answers already typed are kept, matched by event and camera. **Close the file in Excel first.**
+
+Each row has:
+- the HTF period in local time and UTC;
+- the HTF ID and location;
+- the camera source, ID, name and distance;
+- the number of images, and how many are too old to use;
+- links to the camera's image folder and its location map;
+- a yellow **Has the image flooded?** cell (Y/N drop-down) and optional notes.
+
+The **Instructions** sheet explains what counts as flooded, with an example row. The **Progress** sheet counts answered rows. Whether an event is a forecast exceedance or a control is kept in a hidden column, so the reviewer is not biased.
+
+### 2. Review
+
+The reviewer opens each row's image folder, looks at the photos taken during the HTF period, and types **Y** (flooded) or **N** (not flooded). Rows where no photo can be judged are left blank. Photos listed under *Old images to ignore* show a time before the HTF period.
+
+### 3. Score
 
 ```bash
-python3 tools/evaluate.py --events "$BOX" --review "$BOX/HTF_camera_review.xlsx" --csv "$BOX/results.csv"
+python3 tools/evaluate.py --events "$BOX" --csv "$BOX/results.csv"
 ```
 
-### Per-event labels (`labels.csv`)
+Per event:
+- **flooded** if **any** camera is Y;
+- **not flooded** if its answered cameras are all N;
+- **skipped** if no camera is answered, or if all its frames are stale.
 
-`event.json` files are rewritten as frames arrive, so labels live in a separate **`labels.csv`** in the Box folder. The sync never touches it.
+It reports:
+- hits (flooding forecast and seen);
+- false alarms (forecast, not seen);
+- the success ratio and the false alarm ratio (FAR).
 
-1. Create or extend the sheet. This adds a row for every event and keeps rows you already filled:
-
-   ```bash
-   BOX="$HOME/Library/CloudStorage/Box-Box/Coastal Hydrology Lab/Ehsan's project/CamerData/TWL_CrossValidation_captures"
-   python3 tools/evaluate.py --events "$BOX" --template "$BOX/labels.csv"
-   ```
-
-2. For each event folder, look at the frames, then fill `flooding_observed` (yes/no), `confidence` (high/medium/low), `labeled_by` and `notes`. Rows left blank are skipped. Frames marked `stale` show an older picture than the forecast period, so judge by the fresh ones.
-
-3. Score the forecast:
-
-   ```bash
-   python3 tools/evaluate.py --events "$BOX" --labels "$BOX/labels.csv" --min-confidence medium --csv "$BOX/results.csv"
-   ```
-
-   Events whose frames are all stale are excluded from the scores.
+Misses and POD need control events, which are off by default. `results.csv` has one row per scored event with the camera Y/N counts, the forecast peak and the threshold.
 
 ---
 
