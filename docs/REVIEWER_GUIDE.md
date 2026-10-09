@@ -21,16 +21,20 @@ TWL_CrossValidation_captures/
 ├── HTF_camera_review.xlsx      ← the only file you edit
 ├── Reviewer_Guide.docx         ← this guide
 ├── 2026-09-24/                 ← one folder per date
-│   └── 20260924T22Z_HTF1071_exceedance/     ← one folder per event
+│   └── HTF1071_20260924/                    ← one folder per event (HTF ID + date)
 │       ├── event.json                        ← technical details (you can ignore it)
-│       ├── traffic_VA-cam-2853/              ← one folder per camera
+│       ├── 1_traffic_VA-cam-2853/            ← one folder per camera, numbered 1, 2, 3 …
 │       │   ├── map.png                       ← map + forecast chart for this camera
 │       │   ├── 2026-09-24T21-30Z.jpg         ← photos, named by the time they were taken (UTC)
 │       │   └── 2026-09-24T21-45Z.jpg
-│       └── windy_1744113729/
+│       └── 2_windy_1744113729/
 │           └── …
 └── 2026-09-25/
 ```
+
+**Event folder names:** the HTF ID and the date, e.g. `HTF1071_20260924`. If the same HTF point has two events on one day (two high tides), the folders end in `_1` and `_2`, in time order, e.g. `HTF1016_20260925_1` and `HTF1016_20260925_2`.
+
+**Camera folder names:** the number (1 = the camera nearest the forecast point), then the camera source (`traffic`, `windy`, `usgs` or `webcoos`), then the Camera ID. The same name is in the **Image folder** column (C) of the Excel file, so each row points to exactly one camera folder.
 
 **Please do not rename, move or delete any files or folders.** The system updates them automatically every hour.
 
@@ -50,8 +54,10 @@ It has three sheets:
 
 | Column | Meaning |
 |---|---|
-| Event ID | Name of the event, e.g. `20260924T22Z_HTF1071_exceedance` (it matches the event folder name) |
-| HTF ID, latitude, longitude | The forecast point on the coast |
+| Event ID | Name of the event, e.g. `HTF1071_20260924` (it matches the event folder name) |
+| HTF ID | The forecast point on the coast |
+| **Image folder** (column C) | **The camera folder name, e.g. `1_traffic_VA-cam-2853`, exactly as in Finder. Click it to open this camera's photos.** |
+| HTF latitude, longitude | Location of the forecast point |
 | Time zone | Local time zone of that point, e.g. `America/New_York` |
 | **HTF period start / end (local)** | **When the app forecast flooding, in local time. This is the most important time window.** |
 | HTF period start / end (UTC) | The same window in UTC |
@@ -61,7 +67,6 @@ It has three sheets:
 | Number of images | How many photos this camera has for the event |
 | First / Last image (local) | Time of the first and last photo, in local time |
 | Old images to ignore | Photos that were already more than 30 minutes old when the system saved them (frozen or slow cameras). Judge by the other photos. |
-| **Image folder** | **Click to open this camera's photos** |
 | **Location map** | **Click to open `map.png`** (see section 5) |
 | **Has the image flooded?** | **Yellow: your answer** |
 | **Notes (optional)** | **Yellow: your short comment** |
@@ -74,7 +79,7 @@ It has three sheets:
 
 1. **Read the HTF period** (local time) on the row, e.g. *2026-09-24 18:00 to 20:00*.
 2. **Click "Open map"** to see where the camera is, relative to the forecast point, and when its photos were taken (section 5).
-3. **Click the image folder link** and open the photos.
+3. **Click the image folder link** (column C) and open the photos. Without the link, the folder is `<date>/<Event ID>/<Image folder>`, e.g. `2026-09-24/HTF1071_20260924/1_traffic_VA-cam-2853`. Rows of the same event share a shading.
    - Photo names are in **UTC**, e.g. `2026-09-24T23-15Z.jpg` = 23:15 UTC.
    - On the US East Coast in summer (EDT), local time = UTC − 4 hours, so 23:15 UTC = 19:15 EDT. The chart in `map.png` already shows local times.
 4. **Compare the photos over time.** Look at photos before, during and after the HTF period. Tidal flooding rises slowly and then drains away, so changes over the period are the best evidence.

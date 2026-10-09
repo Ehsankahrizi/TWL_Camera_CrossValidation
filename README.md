@@ -60,7 +60,7 @@ flowchart TD
 
 ## Output
 
-Each event gets one folder, with the same layout in S3 (`s3://bil6-twl-camera-crossval-858933856877/events/`) and in Box:
+Each event gets one folder. In S3 (`s3://bil6-twl-camera-crossval-858933856877/events/`) the layout is:
 
 ```
 2026-09-24/
@@ -75,6 +75,10 @@ Each event gets one folder, with the same layout in S3 (`s3://bil6-twl-camera-cr
       2026-09-24T22-00Z.jpg
       map.png
 ```
+
+In Box the hourly sync renames them for reviewers, so a folder matches its row in the review workbook:
+- the event folder is the HTF ID and date: `HTF1071_20260924`. When one HTF point has several events that day (two high tides), they are `HTF1071_20260924_1`, `_2` … in time order, so the first is renamed to `_1` when a second appears. The workbook keeps the original event ID in a hidden column, so answers stay matched;
+- camera folders are numbered per event: `1_traffic_VA-cam-2853`, `2_usgs_…`. Number 1 is the nearest camera. A camera that shows up later gets the next number, and a number never changes once given.
 
 Each camera folder also has **`map.png`**, a two-panel figure (map on top, time series below) that is redrawn every time the camera saves a frame.
 
@@ -93,7 +97,7 @@ Each camera folder also has **`map.png`**, a two-panel figure (map on top, time 
 
 To draw or redraw maps for existing folders, run `python3 -m crossval.maps --events "$BOX" --force`.
 
-**Event ID:** `<window start, UTC hour>_HTF<point id>_<exceedance|control>`
+**Event ID:** `<window start, UTC hour>_HTF<point id>_<exceedance|control>` (Box folders and the review workbook use `HTF<point id>_<yyyymmdd>[_<n>]`, see above)
 
 **File names:** image names are the capture time in UTC (`YYYY-MM-DDTHH-MMZ`).
 
@@ -285,16 +289,17 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 - **Why an app and not a plain script:** macOS lets background jobs write into Box Drive only when they run as an app that has been granted access.
 - **If the Mac is off:** frames wait in S3 and are copied at the next run.
 - **Review workbook:** after each sync, `HTF_camera_review.xlsx` gets rows for any new event × camera.
-  - The file is rewritten **only** when there are new rows, and never while it is open in Excel on this Mac (that hour is skipped and retried).
+  - The file is rewritten **only** when there are new rows or renamed folders, and never while it is open in Excel on this Mac (that hour is skipped and retried).
   - Answers already typed are always kept.
-  - The Mac's built-in Python needs `openpyxl` for this: `/usr/bin/python3 -m pip install --user openpyxl`.
+- **How files reach Box:** `aws s3 sync` fills a local mirror outside Box (`~/Library/Application Support/TWLBoxSync/mirror`, about 1 GB), so only new frames are downloaded. New and changed files are then copied into Box with the reviewer folder names (see [Output](#output)). **Do not sync S3 straight into Box or rename Box folders by hand:** the next `aws s3 sync` would download the original folders again.
+- **Python:** the app runs a venv built on Homebrew Python, `.venv/bin/python` in this repo. The Mac's `/usr/bin/python3` stops working after every Xcode update until the license is accepted again. To create the venv: `/opt/homebrew/bin/python3 -m venv .venv && .venv/bin/pip install openpyxl`.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
 
 **What the Box folder contains**
 
 | Item | Written by |
 |---|---|
-| `YYYY-MM-DD/<event_id>/` folders with `event.json`, camera sub-folders, JPEG frames and `map.png` | The hourly sync (copied from S3) |
+| `YYYY-MM-DD/HTF<id>_<yyyymmdd>[_<n>]/` folders with `event.json`, numbered camera sub-folders, JPEG frames and `map.png` | The hourly sync (copied from S3 through the local mirror) |
 | `HTF_camera_review.xlsx` | The hourly sync adds new rows; the reviewer fills in answers |
 | `Reviewer_Guide.docx` | Placed by hand; a copy is `docs/Reviewer_Guide.docx` in this repo |
 - **Stop it:** `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plist`
@@ -327,7 +332,7 @@ Each row has:
 - the HTF ID and location;
 - the camera source, ID, name and distance;
 - the number of images, and how many are too old to use;
-- links to the camera's image folder and its location map;
+- the camera folder name in column C (`1_traffic_…`, as in Finder), linked to the folder, and a link to its location map;
 - a yellow **Has the image flooded?** cell (drop-down, see below) and optional notes.
 
 The **Instructions** sheet explains what counts as flooded, with an example row. The **Progress** sheet counts answered rows. Whether an event is a forecast exceedance or a control is kept in a hidden column, so the reviewer is not biased.
