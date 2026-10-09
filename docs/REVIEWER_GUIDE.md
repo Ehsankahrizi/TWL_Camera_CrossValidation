@@ -136,6 +136,9 @@ Pick exactly one option from the drop-down:
 - **Save often** (Ctrl+S / Cmd+S), and keep the file format **.xlsx**.
 - **Close Excel when you finish a session.** Every hour the system adds rows for new events to this file. It never removes your answers, but it can only add new rows while the file is closed.
 - **New rows** can appear at the bottom (or, after sorting, anywhere). Use the filter on *Has the image flooded?* and choose **(Blanks)** to see only the rows you still need to do.
+- **Do not rename the column headers, add columns or delete rows.** The hourly update copies your answers into a freshly built file by matching each row's event and camera. It will not update the file at all if a header has been renamed, and anything typed outside the two yellow columns is not kept.
+- **The update waits while people are working:** it skips any hour in which the file was saved during the last 30 minutes.
+- **Mistakes can be undone:** Box keeps earlier versions of the file (in Box on the web: the file's **⋯** menu → *Version History*).
 - **If a file named like "HTF_camera_review (conflict …).xlsx" appears,** do not delete it. Tell your supervisor.
 
 ---

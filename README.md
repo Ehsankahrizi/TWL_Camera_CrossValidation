@@ -289,8 +289,9 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
 - **Why an app and not a plain script:** macOS lets background jobs write into Box Drive only when they run as an app that has been granted access.
 - **If the Mac is off:** frames wait in S3 and are copied at the next run.
 - **Review workbook:** after each sync, `HTF_camera_review.xlsx` gets rows for any new event × camera.
-  - The file is rewritten **only** when there are new rows or renamed folders, and never while it is open in Excel on this Mac (that hour is skipped and retried).
-  - Answers already typed are always kept.
+  - The file is rewritten **only** when there are new rows or renamed folders. That hour is skipped (and retried) while the file is open in Excel on this Mac, or if anyone saved it in the last 30 minutes (other reviewers' Excel locks are not visible through Box).
+  - Answers and notes already typed are always kept, matched by event and camera (the original event ID is in a hidden column), even if the sheet was sorted or filtered. A row whose camera folder is gone keeps its answer at the bottom, marked *(folder not found)*.
+  - **Safety checks:** the new file is built outside Box and only replaces the old one after checking that every earlier answer is in it. If a needed column header was renamed, nothing is written and the log says why. The previous file is backed up first to `~/Library/Application Support/TWLBoxSync/review_backups/` (last 300 kept); Box version history is a second fallback.
 - **How files reach Box:** `aws s3 sync` fills a local mirror outside Box (`~/Library/Application Support/TWLBoxSync/mirror`, about 1 GB), so only new frames are downloaded. New and changed files are then copied into Box with the reviewer folder names (see [Output](#output)). **Do not sync S3 straight into Box or rename Box folders by hand:** the next `aws s3 sync` would download the original folders again.
 - **Python:** the app runs a venv built on Homebrew Python, `.venv/bin/python` in this repo. The Mac's `/usr/bin/python3` stops working after every Xcode update until the license is accepted again. To create the venv: `/opt/homebrew/bin/python3 -m venv .venv && .venv/bin/pip install openpyxl`.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`

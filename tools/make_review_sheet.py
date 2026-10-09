@@ -20,6 +20,8 @@ Usage:
 import argparse
 import json
 import re
+import shutil
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -67,6 +69,10 @@ COLUMNS = [
     ("Event key (hidden)", 34, "event_key"),       # original event_id: answers stay matched when folders are renamed
 ]
 COL = {key: i + 1 for i, (_, _, key) in enumerate(COLUMNS)}
+HEADER_KEY = {h: key for h, _, key in COLUMNS} | {"Image folder": "folder_name"}   # incl. earlier header names
+BACKUPS = Path("~/Library/Application Support/TWLBoxSync/review_backups").expanduser()
+KEEP_BACKUPS = 300
+QUIET_MINUTES = 30        # skip the hourly update if someone saved the workbook more recently than this
 
 
 def local(ts, tz):
@@ -136,23 +142,44 @@ def collect_rows(events_dir):
     return rows
 
 
-def previous_answers(path):
-    """{(event_key, camera source label, camera_id): (answer, notes)} from an existing sheet."""
+def previous_rows(path):
+    """{(event_key, camera source label, camera_id): {column key: value}} from an existing sheet.
+
+    Raises ValueError when the sheet cannot be read safely (e.g. a header was renamed), so
+    the caller never writes a new workbook that silently drops answers.
+    """
     if not Path(path).exists():
         return {}
-    ws = load_workbook(path)["Review"]
+    wb = load_workbook(path)
+    if "Review" not in wb.sheetnames:
+        raise ValueError("no 'Review' sheet")
+    ws = wb["Review"]
     head = {c.value: i for i, c in enumerate(ws[1])}
     need = ("Event ID", "Camera source", "Camera ID", "Has the image flooded?", "Notes (optional)")
-    if not all(h in head for h in need):
-        return {}
+    missing = [h for h in need if h not in head]
+    if missing:
+        raise ValueError(f"column header(s) changed or missing: {missing}")
     out = {}
     for r in ws.iter_rows(min_row=2, values_only=True):
-        if r[head["Event ID"]]:
-            ans = r[head["Has the image flooded?"]]
-            key = r[head["Event key (hidden)"]] if "Event key (hidden)" in head else original_event_id(r[head["Event ID"]])
-            out[(key, r[head["Camera source"]], str(r[head["Camera ID"]]))] = (
-                OLD_ANSWERS.get(str(ans).strip().upper(), ans) if ans is not None else None, r[head["Notes (optional)"]])
+        if not r[head["Event ID"]]:
+            continue
+        vals = {HEADER_KEY[h]: r[i] for h, i in head.items() if h in HEADER_KEY}
+        ans = vals.get("answer")
+        vals["answer"] = OLD_ANSWERS.get(str(ans).strip().upper(), ans) if ans is not None else None
+        key = vals.get("event_key") or original_event_id(vals["event_id"])
+        out[(key, vals["source"], str(vals["camera_id"]))] = vals
     return out
+
+
+def previous_answers(path):
+    """{(event_key, camera source label, camera_id): (answer, notes)} from an existing sheet."""
+    return {k: (v.get("answer"), v.get("notes")) for k, v in previous_rows(path).items()}
+
+
+def answered(rows_by_key):
+    """{key: (answer, notes)} for rows where someone typed something."""
+    return {k: (v.get("answer"), v.get("notes")) for k, v in rows_by_key.items()
+            if v.get("answer") not in (None, "") or v.get("notes") not in (None, "")}
 
 
 def sheet_layout(path):
@@ -176,8 +203,18 @@ def style_header(ws, headers, widths):
 
 
 def build(events_dir, out_path, include_controls=False):
-    old = previous_answers(out_path)
+    """Write the workbook. Answers and notes already typed are always carried over: rows whose
+    camera folder is gone are kept at the bottom, and the file is only replaced after checking
+    that every earlier answer is in the new one (the old file is backed up first)."""
+    out_path = Path(out_path)
+    old_rows = previous_rows(out_path)
+    old = {k: (v.get("answer"), v.get("notes")) for k, v in old_rows.items()}
     rows = [r for r in collect_rows(events_dir) if include_controls or r["kind"] == "exceedance"]
+    have = {(r["event_key"], r["source"], r["camera_id"]) for r in rows}
+    for k, v in answered(old_rows).items():               # answered rows with no folder any more
+        if k not in have:
+            rows.append(dict(old_rows[k], event_key=k[0], folder=None, map="",
+                             folder_name=f"{old_rows[k].get('folder_name') or ''} (folder not found)".strip()))
     wb = Workbook()
 
     # ── Instructions ──
@@ -258,9 +295,10 @@ def build(events_dir, out_path, include_controls=False):
             c.alignment = Alignment(vertical="center", wrap_text=key in ("camera_name", "notes"))
             if band:
                 c.fill = BAND
-        link = ws.cell(row=r_i, column=COL["folder_name"])
-        link.hyperlink = row["folder"]
-        link.font = Font(name=FONT, size=10, color="0563C1", underline="single")
+        if row["folder"]:
+            link = ws.cell(row=r_i, column=COL["folder_name"])
+            link.hyperlink = row["folder"]
+            link.font = Font(name=FONT, size=10, color="0563C1", underline="single")
         if row["map"]:
             m = ws.cell(row=r_i, column=COL["map"], value="Open map")
             m.hyperlink = f"{row['folder']}/map.png"
@@ -305,7 +343,20 @@ def build(events_dir, out_path, include_controls=False):
 
     wb.active = wb.sheetnames.index("Review")
     wb.calculation.fullCalcOnLoad = True       # Excel computes the Progress formulas on open
-    wb.save(out_path)
+    with tempfile.TemporaryDirectory() as tmp:             # write outside Box, check, then replace
+        new_path = Path(tmp) / out_path.name
+        wb.save(new_path)
+        now = previous_answers(new_path)
+        lost = {k: v for k, v in answered(old_rows).items() if now.get(k) != v}
+        if lost:
+            raise RuntimeError(f"not saved: {len(lost)} earlier answer(s) would change, e.g. {next(iter(lost))}")
+        if out_path.exists():
+            BACKUPS.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            shutil.copy2(out_path, BACKUPS / f"{out_path.stem}_{stamp}.xlsx")
+            for b in sorted(BACKUPS.glob(f"{out_path.stem}_*.xlsx"))[:-KEEP_BACKUPS]:
+                b.unlink()
+        shutil.copyfile(new_path, out_path)
     print(f"{out_path}: {len(rows)} rows ({kept} with earlier answers kept)")
 
 
@@ -319,6 +370,10 @@ def refresh_if_needed(events_dir, out_path=None):
     lock = out_path.with_name("~$" + out_path.name)             # Excel's owner file while open
     if lock.exists():
         return "skipped: workbook is open in Excel (will retry next hour)"
+    if out_path.exists():
+        age = datetime.now(timezone.utc).timestamp() - out_path.stat().st_mtime
+        if age < QUIET_MINUTES * 60:
+            return f"skipped: workbook saved {age / 60:.0f} min ago, someone may be editing (will retry next hour)"
     rows = [r for r in collect_rows(events_dir) if r["kind"] == "exceedance"]
     wanted = {(r["event_key"], r["source"], r["camera_id"]) for r in rows}
     if out_path.exists():
