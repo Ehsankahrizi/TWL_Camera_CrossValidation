@@ -34,6 +34,7 @@ FONT = "Arial"
 YELLOW = PatternFill("solid", start_color="FFFF00")
 HEADER_FILL = PatternFill("solid", start_color="1F4E78")
 THIN = Side(style="thin", color="BFBFBF")
+BAND = PatternFill("solid", start_color="EAF1F8")   # every other event, so rows of one event folder read as a group
 ANSWERS = ["Yes", "No", "NaN", "Invalid"]   # only Yes/No are scored; NaN and Invalid are excluded
 OLD_ANSWERS = {"Y": "Yes", "N": "No"}          # answers typed in earlier versions of the sheet
 SOURCE_NAME = {"traffic": "Traffic camera (state DOT)", "usgs": "USGS river/coast camera",
@@ -43,6 +44,7 @@ SOURCE_NAME = {"traffic": "Traffic camera (state DOT)", "usgs": "USGS river/coas
 COLUMNS = [
     ("Event ID", 34, "event_id"),
     ("HTF ID", 8, "htf_id"),
+    ("Image folder (click to open)", 30, "folder_name"),
     ("HTF latitude", 11, "lat"),
     ("HTF longitude", 12, "lon"),
     ("Time zone", 18, "tz"),
@@ -58,11 +60,11 @@ COLUMNS = [
     ("First image (local)", 20, "first_local"),
     ("Last image (local)", 20, "last_local"),
     ("Old images to ignore", 11, "n_stale"),
-    ("Image folder", 30, "folder"),
     ("Location map", 12, "map"),
     ("Has the image flooded?", 14, "answer"),
     ("Notes (optional)", 40, "notes"),
     ("Event type (hidden)", 14, "kind"),
+    ("Event key (hidden)", 34, "event_key"),       # original event_id: answers stay matched when folders are renamed
 ]
 COL = {key: i + 1 for i, (_, _, key) in enumerate(COLUMNS)}
 
@@ -88,6 +90,11 @@ def safe(name):
     return re.sub(r"[^A-Za-z0-9._-]+", "_", str(name)).strip("_")[:80]
 
 
+def original_event_id(name):
+    """Sheets from before the hidden key showed 'HTF0499_20261004T12Z_exceedance'; map back to the event_id."""
+    return re.sub(r"^(HTF\d+)_(\d{8}T\d{2}Z)_", r"\2_\1_", str(name))
+
+
 def collect_rows(events_dir):
     rows = []
     for path in sorted(Path(events_dir).glob("*/*/event.json")):
@@ -102,7 +109,8 @@ def collect_rows(events_dir):
         # (e.g. frames synced from an earlier run), so images are counted from the files.
         for cam_dir in sorted(d for d in path.parent.iterdir() if d.is_dir()):
             stamps = sorted(f.stem for f in cam_dir.glob("*.jpg"))
-            cam = by_folder.get(cam_dir.name)
+            m = re.match(r"^(\d+)_(.+)$", cam_dir.name)    # "2_windy_1651853027" (numbered by the sync)
+            cam = by_folder.get(m.group(2) if m else cam_dir.name)
             if not stamps or not cam:
                 continue
             source, cam_id = cam["source"], str(cam["id"])
@@ -110,7 +118,7 @@ def collect_rows(events_dir):
             times = [re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00Z", s) for s in stamps]
             folder = cam_dir.relative_to(events_dir)
             rows.append({
-                "event_id": ev["event_id"], "htf_id": ev["htf_id"],
+                "event_id": path.parent.name, "event_key": ev["event_id"], "htf_id": ev["htf_id"],
                 "lat": round(ev["lat"], 4), "lon": round(ev["lon"], 4), "tz": tz or "UTC",
                 "start_local": local(w["start"], tz), "end_local": local(w["end"], tz),
                 "start_utc": utc(w["start"]), "end_utc": utc(w["end"]),
@@ -119,15 +127,17 @@ def collect_rows(events_dir):
                 "distance_km": cam.get("distance_km"),
                 "n_images": len(stamps), "first_local": local(times[0], tz), "last_local": local(times[-1], tz),
                 "n_stale": sum(1 for c in caps if c.get("stale")),
-                "folder": str(folder), "map": "map.png" if (Path(events_dir) / folder / "map.png").exists() else "",
+                "folder": folder.as_posix(), "folder_name": cam_dir.name,
+                "folder_no": int(m.group(1)) if m else 0, "map": "map.png" if (Path(events_dir) / folder / "map.png").exists() else "",
                 "kind": ev["kind"],
             })
-    rows.sort(key=lambda r: (r["start_utc"], r["htf_id"], r["distance_km"] if r["distance_km"] is not None else 99))
+    rows.sort(key=lambda r: (r["start_utc"], r["htf_id"], r["folder_no"],
+                             r["distance_km"] if r["distance_km"] is not None else 99))
     return rows
 
 
 def previous_answers(path):
-    """{(event_id, camera source label, camera_id): (answer, notes)} from an existing sheet."""
+    """{(event_key, camera source label, camera_id): (answer, notes)} from an existing sheet."""
     if not Path(path).exists():
         return {}
     ws = load_workbook(path)["Review"]
@@ -139,9 +149,20 @@ def previous_answers(path):
     for r in ws.iter_rows(min_row=2, values_only=True):
         if r[head["Event ID"]]:
             ans = r[head["Has the image flooded?"]]
-            out[(r[head["Event ID"]], r[head["Camera source"]], str(r[head["Camera ID"]]))] = (
+            key = r[head["Event key (hidden)"]] if "Event key (hidden)" in head else original_event_id(r[head["Event ID"]])
+            out[(key, r[head["Camera source"]], str(r[head["Camera ID"]]))] = (
                 OLD_ANSWERS.get(str(ans).strip().upper(), ans) if ans is not None else None, r[head["Notes (optional)"]])
     return out
+
+
+def sheet_layout(path):
+    """(header row, sorted image-folder links) of an existing sheet, to spot renamed columns or folders."""
+    ws = load_workbook(path)["Review"]
+    head = [c.value for c in ws[1]]
+    col = head.index("Image folder (click to open)") + 1 if "Image folder (click to open)" in head else None
+    links = sorted(ws.cell(r, col).hyperlink.target for r in range(2, ws.max_row + 1)
+                   if col and ws.cell(r, col).hyperlink) if col else []
+    return head, links
 
 
 def style_header(ws, headers, widths):
@@ -186,6 +207,12 @@ def build(events_dir, out_path, include_controls=False):
                                  "(frozen or slow cameras). Judge by the other photos."),
         ("One row per camera", "An event can have several cameras. Judge each camera by its own photos; a camera "
                                "that cannot see the flooded area can be N while another is Y."),
+        ("Finding the photos", "Photos are in <date>/<Event ID>/<camera folder>, e.g. 2026-09-30 / "
+                               "HTF0010_20260930 / 1_traffic_OR-cam-517. Event folders are named by HTF ID and date; if one HTF point "
+                               "has two events that day (two high tides), they end in _1 and _2 in time order. The 'Image folder' column (C) shows the "
+                               "camera folder name exactly as it appears in Finder: its number in that event (1 = "
+                               "nearest camera), the camera source (traffic, windy, usgs, webcoos) and the Camera ID. Rows of the same event share a "
+                               "shading; each row is one camera folder inside that event folder."),
         ("Location map", "Each camera folder has map.png showing the HTF point, the 5 km search radius, the camera "
                          "and the distance between them (click 'Open map')."),
         ("", None),
@@ -200,7 +227,7 @@ def build(events_dir, out_path, include_controls=False):
             cb.alignment = Alignment(wrap_text=True, vertical="top")
             ins.row_dimensions[i].height = 42
     ex_row = len(lines) + 1
-    example = [("Event ID", "20260924T23Z_HTF1036_exceedance"), ("HTF period (local)", "2026-09-24 19:00 → 22:00 (America/New_York)"),
+    example = [("Event ID", "HTF1036_20260924"), ("HTF period (local)", "2026-09-24 19:00 → 22:00 (America/New_York)"),
                ("Camera", "Traffic camera (state DOT) · VA-cam-2853 · 1.3 km"),
                ("Has the image flooded?", "Yes"), ("Notes (optional)", "Water across Shore Dr at 20:15, gone by 21:45")]
     for j, (a, b) in enumerate(example):
@@ -217,8 +244,11 @@ def build(events_dir, out_path, include_controls=False):
                         error="Choose Yes, No, NaN or Invalid from the list.", errorTitle="Has the image flooded?")
     ws.add_data_validation(dv)
     kept = 0
+    band, prev_event = False, None
     for r_i, row in enumerate(rows, 2):
-        ans, note = old.get((row["event_id"], row["source"], row["camera_id"]), (None, None))
+        if row["event_id"] != prev_event:
+            band, prev_event = not band, row["event_id"]
+        ans, note = old.get((row["event_key"], row["source"], row["camera_id"]), (None, None))
         kept += ans is not None or note is not None
         row = dict(row, answer=ans, notes=note)
         for _, _, key in COLUMNS:
@@ -226,7 +256,9 @@ def build(events_dir, out_path, include_controls=False):
             c.font = Font(name=FONT, size=10)
             c.border = Border(bottom=THIN)
             c.alignment = Alignment(vertical="center", wrap_text=key in ("camera_name", "notes"))
-        link = ws.cell(row=r_i, column=COL["folder"])
+            if band:
+                c.fill = BAND
+        link = ws.cell(row=r_i, column=COL["folder_name"])
         link.hyperlink = row["folder"]
         link.font = Font(name=FONT, size=10, color="0563C1", underline="single")
         if row["map"]:
@@ -239,14 +271,16 @@ def build(events_dir, out_path, include_controls=False):
         ws.cell(row=r_i, column=COL["answer"]).alignment = Alignment(horizontal="center", vertical="center")
         dv.add(ws.cell(row=r_i, column=COL["answer"]))
     last = max(2, len(rows) + 1)
-    ws.freeze_panes = "C2"
+    ws.freeze_panes = "D2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNS))}{last}"
-    ws.column_dimensions[get_column_letter(COL["kind"])].hidden = True
+    for key in ("kind", "event_key"):
+        ws.column_dimensions[get_column_letter(COL[key])].hidden = True
     ws.cell(row=1, column=COL["answer"]).comment = Comment("Yes = flooding in the photos during the HTF period; No = none; "
                                                            "NaN = photos cannot be judged (night, missing, fog); Invalid = camera "
                                                            "cannot show ground flooding (e.g. on a bridge).", "HTF review")
-    ws.cell(row=1, column=COL["folder"]).comment = Comment("Click to open this camera's photos (the link works when this "
-                                                           "file is opened from the Box folder).", "HTF review")
+    ws.cell(row=1, column=COL["folder_name"]).comment = Comment("Click to open this camera's photos (the link works when this "
+                                                                "file is opened from the Box folder). Path: <date>/<Event ID>/"
+                                                                "<this folder name>.", "HTF review")
 
     # ── Progress (formulas) ──
     pr = wb.create_sheet("Progress")
@@ -285,12 +319,12 @@ def refresh_if_needed(events_dir, out_path=None):
     lock = out_path.with_name("~$" + out_path.name)             # Excel's owner file while open
     if lock.exists():
         return "skipped: workbook is open in Excel (will retry next hour)"
-    wanted = {(r["event_id"], r["source"], r["camera_id"])
-              for r in collect_rows(events_dir) if r["kind"] == "exceedance"}
+    rows = [r for r in collect_rows(events_dir) if r["kind"] == "exceedance"]
+    wanted = {(r["event_key"], r["source"], r["camera_id"]) for r in rows}
     if out_path.exists():
         have = set(previous_answers(out_path))
         new = wanted - have
-        if not new:
+        if not new and sheet_layout(out_path) == ([h for h, _, _ in COLUMNS], sorted(r["folder"] for r in rows)):
             return "unchanged: no new event/camera rows"
     else:
         new = wanted

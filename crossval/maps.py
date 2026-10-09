@@ -320,7 +320,7 @@ def main():
         # Match camera folders on disk (they may hold frames event.json no longer lists).
         by_folder = {f"{c['source']}_{safe(c['id'])}": c for c in ev["cameras"]}
         for folder in sorted(d for d in p.parent.iterdir() if d.is_dir() and any(d.glob("*.jpg"))):
-            cam = by_folder.get(folder.name)
+            cam = by_folder.get(re.sub(r"^\d+_", "", folder.name))   # Box numbers folders: "1_windy_…"
             out = folder / "map.png"
             if not cam or not (args.force or not out.exists()):
                 continue
