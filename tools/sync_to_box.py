@@ -195,7 +195,9 @@ def publish_news(news_mirror, news_dest, capture_mirror):
 
     Only events with at least one report get a folder, named like its captures folder:
         NEWS_DEST/<date>/HTF<id>_<yyyymmdd>[_<k>]/lsr.json
-    HTF_LSR_reports.xlsx lists every report, and every event checked (also those with none).
+    NWS_reports.html next to it shows a map and every report with links to the NWS text.
+    HTF_LSR_reports.xlsx lists every report, and every event checked (also those with none);
+    the event folder names link to that page.
     """
     files = {p.parent.name: p for p in news_mirror.glob("*/*/lsr.json")}
     if not files:
@@ -211,12 +213,88 @@ def publish_news(news_mirror, news_dest, capture_mirror):
         if not d.get("reports"):
             continue
         dst = box_dirs[eid] / "lsr.json"
+        page = box_dirs[eid] / "NWS_reports.html"
+        html = news_page(d, box_dirs[eid].name)
         if not dst.exists() or dst.read_bytes() != files[eid].read_bytes():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(files[eid], dst)
             copied += 1
+        if not page.exists() or page.read_text() != html:
+            page.write_text(html)
     print(f"{copied} storm-report file(s) copied into {news_dest}")
-    write_news_workbook(news_dest, data, {e: p.name for e, p in box_dirs.items()})
+    write_news_workbook(news_dest, data, {e: p.relative_to(news_dest) for e, p in box_dirs.items()})
+
+
+def news_page(d, folder_name):
+    """NWS_reports.html: a map of the HTF point and the reports, and one card per report
+    with its remark and links to the official NWS product and Google Maps."""
+    from html import escape as esc
+
+    def when(r):
+        h = r["hours_from_window"]
+        return "during the forecast window" if h == 0 else f"{abs(h):g} h {'before' if h < 0 else 'after'} the window"
+
+    w = d.get("window", {})
+    cards = []
+    for i, r in enumerate(d["reports"], 1):
+        mag = f" · {esc(str(r['magnitude']))} {esc(r.get('unit') or '')}" if r.get("magnitude") else ""
+        links = [f'<a class="btn" href="{esc(r["product_url"])}" target="_blank">Open official NWS report</a>'] if r.get("product_url") else []
+        links.append(f'<a class="btn ghost" href="https://www.google.com/maps?q={r["lat"]},{r["lon"]}" target="_blank">Google Maps</a>')
+        cards.append(f"""<article>
+  <div class="num">{i}</div>
+  <div>
+    <h3>{esc(r['type'].title())} · {esc(r.get('city') or '')}, {esc(r.get('state') or '')}</h3>
+    <p class="meta">{esc((r.get('time_local') or r['time'])[:16].replace('T', ' '))} local · {when(r)} · {r['distance_km']:g} km from the HTF point · reported by {esc(r.get('source') or 'unknown')}{mag}</p>
+    <blockquote>{esc(r.get('remark') or '(no remark)')}</blockquote>
+    <p>{' '.join(links)}</p>
+  </div>
+</article>""")
+    pts = json.dumps([{"lat": r["lat"], "lon": r["lon"], "n": i, "t": r["type"].title(), "c": r.get("city") or ""}
+                      for i, r in enumerate(d["reports"], 1)])
+    radius = d.get("search", {}).get("radius_km", 20)
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NWS reports · {esc(folder_name)}</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+ :root {{ --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e2dc; --accent:#0b5cad; }}
+ @media (prefers-color-scheme: dark) {{ :root {{ --bg:#161615; --card:#21211f; --ink:#ececea; --muted:#a3a39c; --line:#34342f; --accent:#6aa8ec; }} }}
+ body {{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, system-ui, sans-serif; }}
+ main {{ max-width:900px; margin:0 auto; padding:24px 16px 48px; }}
+ h1 {{ font-size:22px; margin:0 0 4px; }} h3 {{ font-size:16px; margin:0 0 2px; }}
+ .meta, .sub {{ color:var(--muted); font-size:13px; margin:0 0 8px; }}
+ #map {{ height:360px; border-radius:10px; border:1px solid var(--line); margin:16px 0 20px; }}
+ article {{ display:flex; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px; }}
+ .num {{ flex:none; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:600; font-size:13px; }}
+ blockquote {{ margin:8px 0 10px; padding:8px 12px; border-left:3px solid var(--accent); background:var(--bg); border-radius:4px; }}
+ .btn {{ display:inline-block; padding:6px 12px; border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; font-size:13px; margin:0 6px 6px 0; }}
+ .btn.ghost {{ background:none; color:var(--accent); border:1px solid var(--accent); }}
+ .note {{ color:var(--muted); font-size:13px; margin-top:20px; }}
+</style></head>
+<body><main>
+<h1>{esc(folder_name)}: {len(d['reports'])} NWS flood report{'s' if len(d['reports']) != 1 else ''}</h1>
+<p class="sub">HTF point {d['htf_id']} ({d['lat']:.4f}, {d['lon']:.4f}) · forecast window {esc((w.get('start_local') or w.get('start', ''))[:16].replace('T', ' '))} → {esc((w.get('end_local') or w.get('end', ''))[:16].replace('T', ' '))} local · reports within {radius:g} km, checked {esc(d['checked_at'][:16].replace('T', ' '))} UTC{'' if d['final'] else ' (not final yet: late reports may still be added)'}</p>
+<div id="map"></div>
+{''.join(cards)}
+<p class="note">Source: NWS Local Storm Reports, archived by the Iowa Environmental Mesonet. Report locations are town-level, not exact streets. The same data is in lsr.json in this folder.</p>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+ const htf = [{d['lat']}, {d['lon']}], pts = {pts};
+ const map = L.map('map');
+ L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 18, attribution: '&copy; OpenStreetMap'}}).addTo(map);
+ L.circle(htf, {{radius: {radius} * 1000, color: '#0b5cad', weight: 1, fillOpacity: 0.04}}).addTo(map);
+ L.circleMarker(htf, {{radius: 8, color: '#fff', weight: 2, fillColor: '#d9480f', fillOpacity: 1}}).addTo(map).bindTooltip('HTF point {d['htf_id']}', {{permanent: true, direction: 'right'}});
+ const b = [htf];
+ pts.forEach(p => {{ b.push([p.lat, p.lon]);
+   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="num">' + p.n + '</div>', iconSize: [28, 28], iconAnchor: [14, 14]}})}})
+    .addTo(map).bindPopup(p.n + '. ' + p.t + ' · ' + p.c); }});
+ const fit = () => {{ map.invalidateSize(); map.fitBounds(L.latLngBounds(b).pad(0.15), {{maxZoom: 13}}); }};
+ map.setView(htf, 11); fit();
+ window.addEventListener('load', fit); window.addEventListener('resize', fit);
+</script>
+</body></html>
+"""
 
 
 def write_news_workbook(news_dest, data, names):
@@ -237,7 +315,9 @@ def write_news_workbook(news_dest, data, names):
                   "Coastal flood reports", "Nearest report (km)", "Checked at (UTC)", "Final"])
     for eid in sorted(data):
         d, w = data[eid], data[eid].get("window", {})
-        name = names.get(eid, eid)
+        rel = names.get(eid)
+        name = rel.name if rel else eid
+        page = (rel / "NWS_reports.html").as_posix() if rel and d["reports"] else None
         for r in d["reports"]:
             ws.append([name, d["htf_id"], w.get("start_local"), w.get("end_local"), r.get("time_local") or r["time"],
                        r["hours_from_window"], r["distance_km"], r["type"], r.get("magnitude"), r.get("unit"),
@@ -245,9 +325,13 @@ def write_news_workbook(news_dest, data, names):
                        r.get("product_url"), d["final"]])
             if r.get("product_url"):
                 ws.cell(ws.max_row, 16).hyperlink = r["product_url"]
+            if page:
+                ws.cell(ws.max_row, 1).hyperlink = page
         ev_ws.append([name, d["htf_id"], d["kind"], w.get("start_local"), w.get("end_local"), d["n_reports"],
                       d["n_coastal_flood"], min((r["distance_km"] for r in d["reports"]), default=None),
                       d["checked_at"], d["final"]])
+        if page:
+            ev_ws.cell(ev_ws.max_row, 1).hyperlink = page
     for sheet, widths in ((ws, [24, 8, 26, 26, 26, 10, 10, 15, 10, 8, 20, 6, 8, 18, 80, 30, 7]),
                           (ev_ws, [24, 8, 11, 26, 26, 9, 12, 12, 21, 7])):
         for i, wdt in enumerate(widths, 1):

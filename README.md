@@ -51,7 +51,7 @@ flowchart TD
 
     S3 --> SYNC["③ TWLBoxSync.app on the lab Mac (hourly)<br/>aws s3 sync → Box Drive"]
     SYNC --> BOX[("Box: CamerData/TWL_CrossValidation_captures<br/>{date}/{event_id}/event.json + camera folders")]
-    SYNC --> NEWS[("Box: CamerData/TWL_CrossValidation_news<br/>lsr.json per event with reports + HTF_LSR_reports.xlsx")]
+    SYNC --> NEWS[("Box: CamerData/TWL_CrossValidation_news<br/>lsr.json + NWS_reports.html per event with reports<br/>+ HTF_LSR_reports.xlsx")]
     BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Yes / No / NaN / Invalid per camera"]
     LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · success ratio · FAR"]
 ```
@@ -313,7 +313,7 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
   - **Safety checks:** the new file is built outside Box and only replaces the old one after checking that every earlier answer is in it. If a needed column header was renamed, nothing is written and the log says why. The previous file is backed up first to `~/Library/Application Support/TWLBoxSync/review_backups/` (last 300 kept); Box version history is a second fallback.
 - **How files reach Box:** `aws s3 sync` fills a local mirror outside Box (`~/Library/Application Support/TWLBoxSync/mirror`, about 1 GB), so only new frames are downloaded. New and changed files are then copied into Box with the reviewer folder names (see [Output](#output)). **Do not sync S3 straight into Box or rename Box folders by hand:** the next `aws s3 sync` would download the original folders again.
 - **Python:** the app runs a venv built on Homebrew Python, `.venv/bin/python` in this repo. The Mac's `/usr/bin/python3` stops working after every Xcode update until the license is accepted again. To create the venv: `/opt/homebrew/bin/python3 -m venv .venv && .venv/bin/pip install openpyxl`.
-- **Storm reports:** with `--news-dest` (the app passes `CamerData/TWL_CrossValidation_news`), `s3://…/news/` is synced into a second mirror (`~/Library/Application Support/TWLBoxSync/news_mirror`). Events with at least one report get a folder with the same name as their captures folder, holding `lsr.json`. `HTF_LSR_reports.xlsx` there is rewritten each hour (skipped while open in Excel). Its *Reports* sheet has one row per report; its *Events* sheet has one row per event checked, including those with none. Nothing in it is typed by hand, so it is safe to rewrite.
+- **Storm reports:** with `--news-dest` (the app passes `CamerData/TWL_CrossValidation_news`), `s3://…/news/` is synced into a second mirror (`~/Library/Application Support/TWLBoxSync/news_mirror`). Events with at least one report get a folder with the same name as their captures folder, holding `lsr.json` and `NWS_reports.html`. The HTML page opens in any browser and shows a map of the HTF point and the reports, plus each report's text with buttons to open the official NWS report and Google Maps. In the workbook, the event folder names link to that page. `HTF_LSR_reports.xlsx` there is rewritten each hour (skipped while open in Excel). Its *Reports* sheet has one row per report; its *Events* sheet has one row per event checked, including those with none. Nothing in it is typed by hand, so it is safe to rewrite.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
 
 **What the Box folder contains**
