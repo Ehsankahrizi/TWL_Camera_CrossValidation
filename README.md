@@ -29,6 +29,7 @@ flowchart TD
         end
         subgraph REP["②b Ground reports — after each plan"]
             R1["NWS Local Storm Reports (IEM):<br/>flood reports ≤ 20 km, window −3 h … +6 h<br/>re-checked until 42 h after the window"]
+            R2["Google News: town/county + state + flood words,<br/>published day −1 … day +2; headlines scored by keywords"]
         end
         subgraph CAP["② Capture — every 15 min (:00 :15 :30 :45)"]
             C1{"Window open now?"}
@@ -41,9 +42,11 @@ flowchart TD
     end
     PAGES --> P1
     PAGES --> P2
-    P4 --> S3[("S3 bucket bil6-twl-camera-crossval-858933856877<br/>schedule/schedule.json<br/>events/{date}/{event_id}/event.json + JPEG frames<br/>news/{date}/{event_id}/lsr.json")]
+    P4 --> S3[("S3 bucket bil6-twl-camera-crossval-858933856877<br/>schedule/schedule.json<br/>events/{date}/{event_id}/event.json + JPEG frames<br/>news/{date}/{event_id}/lsr.json + news.json")]
     S3 --> R1
     R1 --> S3
+    S3 --> R2
+    R2 --> S3
     S3 --> C1
     S3 --> C3
     C2 --> S3
@@ -51,7 +54,7 @@ flowchart TD
 
     S3 --> SYNC["③ TWLBoxSync.app on the lab Mac (hourly)<br/>aws s3 sync → Box Drive"]
     SYNC --> BOX[("Box: CamerData/TWL_CrossValidation_captures<br/>{date}/{event_id}/event.json + camera folders")]
-    SYNC --> NEWS[("Box: CamerData/TWL_CrossValidation_news<br/>lsr.json + NWS_reports.html per event with reports<br/>+ HTF_LSR_reports.xlsx")]
+    SYNC --> NEWS[("Box: CamerData/TWL_CrossValidation_news<br/>lsr.json + news.json + Flood_reports.html per event<br/>+ HTF_flood_reports.xlsx")]
     BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Yes / No / NaN / Invalid per camera"]
     LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · success ratio · FAR"]
 ```
@@ -70,6 +73,24 @@ A second, independent check of the forecast. When an NWS office learns of floodi
 - **Radius:** LSRs are placed at a town or a "2 S Miami Beach"-style offset, not the exact street, so the radius is wider than the camera radius. Use `distance_km` and `hours_from_window` to apply a stricter match.
 - **No report ≠ no flood:** most minor tidal flooding is never reported. LSRs can confirm a flood but cannot prove there was none. In a backtest of 605 events (24 Sep – 9 Nov 2026), 72 had at least one report within 20 km.
 - **Backfill:** `S3_BUCKET=bil6-twl-camera-crossval-858933856877 STATE_DIR=/tmp/twl-state python -m crossval.reports --all` checks every event already in S3.
+
+### News articles (Google News)
+
+`crossval/news.py` runs right after the storm-report check, on the same schedule. It places each HTF point in a town (or a county, if the point is not inside a town) with the free [US Census geocoder](https://geocoding.geo.census.gov/), then searches Google News for `"<town>" "<state>"` and `"<county>" "<state>"` with flood words, for articles published from the day before the window to two days after it. Results go to `news/<date>/<event_id>/news.json`.
+
+Each headline is scored by keywords; there is no AI and no API key:
+
+| Points | When the headline… |
+|---|---|
+| +3 | names the town or county |
+| +3 | has coastal/tidal words (king tide, high tide, tidal, storm surge, overwash, nor'easter …) |
+| +2 | has street-flooding words (flooded streets/roads, road closed, impassable, underwater …) |
+| +1 | says "flood", names the state, or reports flooding that happened (flooded, rescue, damage …) |
+| −1 | uses warning/forecast wording (warning, advisory, braces, expected, could …) |
+| −2 | has rain/river-flood words (flash flood, heavy rain, river crest …) |
+| −3 / −4 | has off-topic words / names another state |
+
+Score ≥ 5 is **likely**, 3–4 **possible**, below 3 **unlikely**. The labels only sort articles for a person to read: a "likely" headline can be about a warning or a nearby town, so open the article before counting it as evidence. Google News publish times are approximate. Backfill: `python -m crossval.news --all`, as for the storm reports.
 
 **Why live and archive differ:**
 - **Live cameras:** traffic cameras and Windy webcams keep no history, so their frames must be grabbed *during* the window.
@@ -313,7 +334,7 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
   - **Safety checks:** the new file is built outside Box and only replaces the old one after checking that every earlier answer is in it. If a needed column header was renamed, nothing is written and the log says why. The previous file is backed up first to `~/Library/Application Support/TWLBoxSync/review_backups/` (last 300 kept); Box version history is a second fallback.
 - **How files reach Box:** `aws s3 sync` fills a local mirror outside Box (`~/Library/Application Support/TWLBoxSync/mirror`, about 1 GB), so only new frames are downloaded. New and changed files are then copied into Box with the reviewer folder names (see [Output](#output)). **Do not sync S3 straight into Box or rename Box folders by hand:** the next `aws s3 sync` would download the original folders again.
 - **Python:** the app runs a venv built on Homebrew Python, `.venv/bin/python` in this repo. The Mac's `/usr/bin/python3` stops working after every Xcode update until the license is accepted again. To create the venv: `/opt/homebrew/bin/python3 -m venv .venv && .venv/bin/pip install openpyxl`.
-- **Storm reports:** with `--news-dest` (the app passes `CamerData/TWL_CrossValidation_news`), `s3://…/news/` is synced into a second mirror (`~/Library/Application Support/TWLBoxSync/news_mirror`). Events with at least one report get a folder with the same name as their captures folder, holding `lsr.json` and `NWS_reports.html`. The HTML page opens in any browser and shows a map of the HTF point and the reports, plus each report's text with buttons to open the official NWS report and Google Maps. In the workbook, the event folder names link to that page. `HTF_LSR_reports.xlsx` there is rewritten each hour (skipped while open in Excel). Its *Reports* sheet has one row per report; its *Events* sheet has one row per event checked, including those with none. Nothing in it is typed by hand, so it is safe to rewrite.
+- **Storm reports:** with `--news-dest` (the app passes `CamerData/TWL_CrossValidation_news`), `s3://…/news/` is synced into a second mirror (`~/Library/Application Support/TWLBoxSync/news_mirror`). Events with at least one NWS report or a likely/possible news article get a folder with the same name as their captures folder, holding `lsr.json`, `news.json` and `Flood_reports.html`. The HTML page opens in any browser. It shows a map of the HTF point and the NWS reports, each report's text with buttons to open the official NWS report and Google Maps, and then the news articles with links, labels and scores. Unlikely articles are folded away at the bottom. `HTF_flood_reports.xlsx` there is rewritten each hour (skipped while open in Excel). It has three sheets: *NWS reports* (one row per report), *News* (one row per article, all labels) and *Events* (one row per event checked, including those with nothing found). Event folder names link to the event's page. Nothing in it is typed by hand, so it is safe to rewrite.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
 
 **What the Box folder contains**
