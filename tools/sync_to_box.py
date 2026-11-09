@@ -20,10 +20,14 @@ from HTF<id>_<yyyymmdd> to ..._1 when a second event appears).
 Afterwards HTF_camera_review.xlsx gets rows for any new event × camera (skipped while
 the workbook is open in Excel; earlier answers are always kept).
 
+With --news-dest, the NWS Local Storm Reports found near each event (S3 news/, written
+by crossval/reports.py) are copied there too, with HTF_LSR_reports.xlsx listing them.
+
 Box Drive then uploads the files. Needs the GitHub CLI (`gh`) logged in.
 
 Usage:
-    python3 tools/sync_to_box.py --dest "/Users/<you>/Library/CloudStorage/Box-Box/<folder>"
+    python3 tools/sync_to_box.py --dest "/Users/<you>/Library/CloudStorage/Box-Box/<folder>" \\
+        [--news-dest "/Users/<you>/Library/CloudStorage/Box-Box/<news folder>"]
 """
 
 import argparse
@@ -39,6 +43,7 @@ REPO = "Ehsankahrizi/TWL_Camera_CrossValidation"
 S3_BUCKET = "bil6-twl-camera-crossval-858933856877"     # ECS deployment
 STATE_FILE = ".synced_artifacts.json"
 MIRROR = Path("~/Library/Application Support/TWLBoxSync/mirror").expanduser()
+NEWS_MIRROR = Path("~/Library/Application Support/TWLBoxSync/news_mirror").expanduser()
 NUMBERED = re.compile(r"^(\d+)_(.+)$")             # "2_windy_1651853027" → 2, "windy_1651853027"
 
 
@@ -92,22 +97,23 @@ def box_event_names(event_ids):
     return out
 
 
-def event_id_of(ev_dir):
+def event_id_of(ev_dir, marker="event.json"):
     try:
-        return json.loads((ev_dir / "event.json").read_text())["event_id"]
+        return json.loads((ev_dir / marker).read_text())["event_id"]
     except (OSError, ValueError, KeyError):
         return None
 
 
-def name_event_folders(dest, mirror_ids):
+def name_event_folders(dest, mirror_ids, marker="event.json"):
     """Rename Box event folders to their HTF/day names; returns {event_id: Box folder Path}.
 
-    Box folders are found by the event_id inside event.json, whatever they are named now
+    Box folders are found by the event_id inside `marker` (event.json, or lsr.json in the
+    news folder), whatever they are named now
     (original, an earlier scheme, or a name that changed because a second event appeared).
     """
     here = {}                                           # event_id → current Box folder
-    for ev_json in dest.glob("*/*/event.json"):
-        eid = event_id_of(ev_json.parent)
+    for ev_json in dest.glob(f"*/*/{marker}"):
+        eid = event_id_of(ev_json.parent, marker)
         if eid:
             here[eid] = ev_json.parent
     ids = set(here) | set(mirror_ids)
@@ -184,12 +190,174 @@ def publish(mirror, dest):
     print(f"{copied} file(s) copied into {dest}")
 
 
+def publish_news(news_mirror, news_dest, capture_mirror):
+    """Copy NWS storm-report files (S3 news/) into the Box news folder.
+
+    Only events with at least one report get a folder, named like its captures folder:
+        NEWS_DEST/<date>/HTF<id>_<yyyymmdd>[_<k>]/lsr.json
+    NWS_reports.html next to it shows a map and every report with links to the NWS text.
+    HTF_LSR_reports.xlsx lists every report, and every event checked (also those with none);
+    the event folder names link to that page.
+    """
+    files = {p.parent.name: p for p in news_mirror.glob("*/*/lsr.json")}
+    if not files:
+        print("No storm-report files yet")
+        return
+    data = {eid: json.loads(p.read_text()) for eid, p in files.items()}
+    # Name folders over all events of each day, so names match the captures folders.
+    all_ids = {ev.name: ev.parent.name for ev in (p.parent for p in capture_mirror.glob("*/*/event.json"))}
+    all_ids.update({eid: p.parent.parent.name for eid, p in files.items()})
+    box_dirs = name_event_folders(news_dest, all_ids, marker="lsr.json")
+    copied = 0
+    for eid, d in data.items():
+        if not d.get("reports"):
+            continue
+        dst = box_dirs[eid] / "lsr.json"
+        page = box_dirs[eid] / "NWS_reports.html"
+        html = news_page(d, box_dirs[eid].name)
+        if not dst.exists() or dst.read_bytes() != files[eid].read_bytes():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(files[eid], dst)
+            copied += 1
+        if not page.exists() or page.read_text() != html:
+            page.write_text(html)
+    print(f"{copied} storm-report file(s) copied into {news_dest}")
+    write_news_workbook(news_dest, data, {e: p.relative_to(news_dest) for e, p in box_dirs.items()})
+
+
+def news_page(d, folder_name):
+    """NWS_reports.html: a map of the HTF point and the reports, and one card per report
+    with its remark and links to the official NWS product and Google Maps."""
+    from html import escape as esc
+
+    def when(r):
+        h = r["hours_from_window"]
+        return "during the forecast window" if h == 0 else f"{abs(h):g} h {'before' if h < 0 else 'after'} the window"
+
+    w = d.get("window", {})
+    cards = []
+    for i, r in enumerate(d["reports"], 1):
+        mag = f" · {esc(str(r['magnitude']))} {esc(r.get('unit') or '')}" if r.get("magnitude") else ""
+        links = [f'<a class="btn" href="{esc(r["product_url"])}" target="_blank">Open official NWS report</a>'] if r.get("product_url") else []
+        links.append(f'<a class="btn ghost" href="https://www.google.com/maps?q={r["lat"]},{r["lon"]}" target="_blank">Google Maps</a>')
+        cards.append(f"""<article>
+  <div class="num">{i}</div>
+  <div>
+    <h3>{esc(r['type'].title())} · {esc(r.get('city') or '')}, {esc(r.get('state') or '')}</h3>
+    <p class="meta">{esc((r.get('time_local') or r['time'])[:16].replace('T', ' '))} local · {when(r)} · {r['distance_km']:g} km from the HTF point · reported by {esc(r.get('source') or 'unknown')}{mag}</p>
+    <blockquote>{esc(r.get('remark') or '(no remark)')}</blockquote>
+    <p>{' '.join(links)}</p>
+  </div>
+</article>""")
+    pts = json.dumps([{"lat": r["lat"], "lon": r["lon"], "n": i, "t": r["type"].title(), "c": r.get("city") or ""}
+                      for i, r in enumerate(d["reports"], 1)])
+    radius = d.get("search", {}).get("radius_km", 20)
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NWS reports · {esc(folder_name)}</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+ :root {{ --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e2dc; --accent:#0b5cad; }}
+ @media (prefers-color-scheme: dark) {{ :root {{ --bg:#161615; --card:#21211f; --ink:#ececea; --muted:#a3a39c; --line:#34342f; --accent:#6aa8ec; }} }}
+ body {{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, system-ui, sans-serif; }}
+ main {{ max-width:900px; margin:0 auto; padding:24px 16px 48px; }}
+ h1 {{ font-size:22px; margin:0 0 4px; }} h3 {{ font-size:16px; margin:0 0 2px; }}
+ .meta, .sub {{ color:var(--muted); font-size:13px; margin:0 0 8px; }}
+ #map {{ height:360px; border-radius:10px; border:1px solid var(--line); margin:16px 0 20px; }}
+ article {{ display:flex; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px; }}
+ .num {{ flex:none; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:600; font-size:13px; }}
+ blockquote {{ margin:8px 0 10px; padding:8px 12px; border-left:3px solid var(--accent); background:var(--bg); border-radius:4px; }}
+ .btn {{ display:inline-block; padding:6px 12px; border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; font-size:13px; margin:0 6px 6px 0; }}
+ .btn.ghost {{ background:none; color:var(--accent); border:1px solid var(--accent); }}
+ .note {{ color:var(--muted); font-size:13px; margin-top:20px; }}
+</style></head>
+<body><main>
+<h1>{esc(folder_name)}: {len(d['reports'])} NWS flood report{'s' if len(d['reports']) != 1 else ''}</h1>
+<p class="sub">HTF point {d['htf_id']} ({d['lat']:.4f}, {d['lon']:.4f}) · forecast window {esc((w.get('start_local') or w.get('start', ''))[:16].replace('T', ' '))} → {esc((w.get('end_local') or w.get('end', ''))[:16].replace('T', ' '))} local · reports within {radius:g} km, checked {esc(d['checked_at'][:16].replace('T', ' '))} UTC{'' if d['final'] else ' (not final yet: late reports may still be added)'}</p>
+<div id="map"></div>
+{''.join(cards)}
+<p class="note">Source: NWS Local Storm Reports, archived by the Iowa Environmental Mesonet. Report locations are town-level, not exact streets. The same data is in lsr.json in this folder.</p>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+ const htf = [{d['lat']}, {d['lon']}], pts = {pts};
+ const map = L.map('map');
+ // Esri tiles: OpenStreetMap's servers refuse pages opened from a file (no referrer).
+ const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+ const street = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Tiles &copy; Esri'}}).addTo(map);
+ const sat = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'}});
+ L.control.layers({{'Streets': street, 'Satellite': sat}}).addTo(map);
+ L.circle(htf, {{radius: {radius} * 1000, color: '#0b5cad', weight: 1, fillOpacity: 0.04}}).addTo(map);
+ L.circleMarker(htf, {{radius: 8, color: '#fff', weight: 2, fillColor: '#d9480f', fillOpacity: 1}}).addTo(map).bindTooltip('HTF point {d['htf_id']}', {{permanent: true, direction: 'right'}});
+ const b = [htf];
+ pts.forEach(p => {{ b.push([p.lat, p.lon]);
+   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="num">' + p.n + '</div>', iconSize: [28, 28], iconAnchor: [14, 14]}})}})
+    .addTo(map).bindPopup(p.n + '. ' + p.t + ' · ' + p.c); }});
+ const fit = () => {{ map.invalidateSize(); map.fitBounds(L.latLngBounds(b).pad(0.15), {{maxZoom: 13}}); }};
+ map.setView(htf, 11); fit();
+ window.addEventListener('load', fit); window.addEventListener('resize', fit);
+</script>
+</body></html>
+"""
+
+
+def write_news_workbook(news_dest, data, names):
+    out = news_dest / "HTF_LSR_reports.xlsx"
+    if (news_dest / f"~${out.name}").exists():
+        print(f"{out.name} is open in Excel; not updated")
+        return
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reports"
+    ws.append(["Event folder", "HTF id", "Window start (local)", "Window end (local)", "Report time (local)",
+               "Hours from window", "Distance (km)", "Type", "Magnitude", "Unit", "City", "State", "NWS office",
+               "Reported by", "Remark", "NWS product", "Final"])
+    ev_ws = wb.create_sheet("Events")
+    ev_ws.append(["Event folder", "HTF id", "Kind", "Window start (local)", "Window end (local)", "Reports",
+                  "Coastal flood reports", "Nearest report (km)", "Checked at (UTC)", "Final"])
+    for eid in sorted(data):
+        d, w = data[eid], data[eid].get("window", {})
+        rel = names.get(eid)
+        name = rel.name if rel else eid
+        page = (rel / "NWS_reports.html").as_posix() if rel and d["reports"] else None
+        for r in d["reports"]:
+            ws.append([name, d["htf_id"], w.get("start_local"), w.get("end_local"), r.get("time_local") or r["time"],
+                       r["hours_from_window"], r["distance_km"], r["type"], r.get("magnitude"), r.get("unit"),
+                       r.get("city"), r.get("state"), r.get("wfo"), r.get("source"), r.get("remark"),
+                       r.get("product_url"), d["final"]])
+            if r.get("product_url"):
+                ws.cell(ws.max_row, 16).hyperlink = r["product_url"]
+            if page:
+                ws.cell(ws.max_row, 1).hyperlink = page
+        ev_ws.append([name, d["htf_id"], d["kind"], w.get("start_local"), w.get("end_local"), d["n_reports"],
+                      d["n_coastal_flood"], min((r["distance_km"] for r in d["reports"]), default=None),
+                      d["checked_at"], d["final"]])
+        if page:
+            ev_ws.cell(ev_ws.max_row, 1).hyperlink = page
+    for sheet, widths in ((ws, [24, 8, 26, 26, 26, 10, 10, 15, 10, 8, 20, 6, 8, 18, 80, 30, 7]),
+                          (ev_ws, [24, 8, 11, 26, 26, 9, 12, 12, 21, 7])):
+        for i, wdt in enumerate(widths, 1):
+            sheet.column_dimensions[sheet.cell(1, i).column_letter].width = wdt
+        for c in sheet[1]:
+            c.font = Font(bold=True)
+        sheet.freeze_panes = "A2"
+        sheet.auto_filter.ref = sheet.dimensions
+    tmp = news_dest / f".{out.name}.tmp"
+    wb.save(tmp)
+    tmp.replace(out)
+    n_rep = sum(len(d["reports"]) for d in data.values())
+    print(f"{out.name}: {n_rep} reports for {sum(bool(d['reports']) for d in data.values())} of {len(data)} events")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dest", required=True, help="Box Drive folder to sync into")
     ap.add_argument("--s3-bucket", default=S3_BUCKET, help="bucket written by the ECS service ('' to skip)")
     ap.add_argument("--no-artifacts", action="store_true", help="skip GitHub Actions artifacts")
     ap.add_argument("--mirror", default=str(MIRROR), help="local copy of the bucket layout, outside Box")
+    ap.add_argument("--news-dest", help="Box folder for NWS storm reports (S3 news/); skipped if not given")
     args = ap.parse_args()
 
     dest = Path(args.dest).expanduser()
@@ -212,6 +380,16 @@ def main():
         sync_artifacts(mirror, state_path, synced)
     publish(mirror, dest)
     refresh_review_sheet(dest)
+    if args.news_dest and args.s3_bucket:
+        news_dest = Path(args.news_dest).expanduser()
+        news_dest.mkdir(parents=True, exist_ok=True)
+        NEWS_MIRROR.mkdir(parents=True, exist_ok=True)
+        r = subprocess.run([shutil.which("aws"), "s3", "sync", f"s3://{args.s3_bucket}/news/", str(NEWS_MIRROR),
+                            "--only-show-errors", "--no-progress"], capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"Storm reports not synced: {r.stderr.strip()[:300]}")
+        else:
+            publish_news(NEWS_MIRROR, news_dest, mirror)
 
 
 def sync_artifacts(mirror, state_path, synced):

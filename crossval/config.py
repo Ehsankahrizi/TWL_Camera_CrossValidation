@@ -30,6 +30,12 @@ ARCHIVE_FRAME_STEP_MIN = 15             # keep at most one archived frame per th
 CONTROL_MAX_PER_RUN = int(os.environ.get("CONTROL_MAX_PER_RUN", "0"))
 CONTROL_WINDOW_HALF_MIN = 60            # capture ±60 min around the forecast peak
 
+# ── Ground reports (NWS Local Storm Reports, crossval/reports.py) ──
+REPORT_RADIUS_KM = 20.0                 # LSRs are geocoded to towns, so wider than the camera radius
+REPORT_BEFORE_H = 3                     # search from 3 h before the window ...
+REPORT_AFTER_H = 6                      # ... to 6 h after it
+REPORT_FINAL_AFTER_H = 42               # re-check until then: LSRs can be issued late
+
 # ── Images ──
 IMAGE_MAX_WIDTH = 1920                  # full HD kept as is; larger frames are downsized
 JPEG_QUALITY = 85
