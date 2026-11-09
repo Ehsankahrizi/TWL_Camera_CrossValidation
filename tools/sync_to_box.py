@@ -282,7 +282,11 @@ def news_page(d, folder_name):
 <script>
  const htf = [{d['lat']}, {d['lon']}], pts = {pts};
  const map = L.map('map');
- L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom: 18, attribution: '&copy; OpenStreetMap'}}).addTo(map);
+ // Esri tiles: OpenStreetMap's servers refuse pages opened from a file (no referrer).
+ const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+ const street = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Tiles &copy; Esri'}}).addTo(map);
+ const sat = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'}});
+ L.control.layers({{'Streets': street, 'Satellite': sat}}).addTo(map);
  L.circle(htf, {{radius: {radius} * 1000, color: '#0b5cad', weight: 1, fillOpacity: 0.04}}).addTo(map);
  L.circleMarker(htf, {{radius: 8, color: '#fff', weight: 2, fillColor: '#d9480f', fillOpacity: 1}}).addTo(map).bindTooltip('HTF point {d['htf_id']}', {{permanent: true, direction: 'right'}});
  const b = [htf];
