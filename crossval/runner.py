@@ -1,7 +1,8 @@
 """Always-on scheduler for the ECS service (no EventBridge needed).
 
 Runs a capture cycle at :00, :15, :30 and :45 past every hour, and a planning cycle
-at 01:50, 07:50, 13:50 and 19:50 UTC (20 min after each coastal-twl-app forecast run).
+at 01:50, 07:50, 13:50 and 19:50 UTC (20 min after each coastal-twl-app forecast run),
+followed by a storm-report check (crossval/reports.py).
 Each cycle pulls the state from S3, runs, and pushes what changed. A failing cycle is
 logged and the loop continues; if the process dies, ECS restarts the container.
 
@@ -12,7 +13,7 @@ import time
 import traceback
 from datetime import timedelta
 
-from . import capture, config, plan, store
+from . import capture, config, plan, reports, store
 from .util import utcnow
 
 PLAN_TIMES = {(1, 50), (7, 50), (13, 50), (19, 50)}
@@ -52,6 +53,7 @@ def main():
         time.sleep(max(0, (slot - utcnow()).total_seconds()))
         if (slot.hour, slot.minute) in PLAN_TIMES:
             run_cycle("plan", plan.main)
+            run_cycle("reports", reports.main)
         if slot.minute % CAPTURE_EVERY_MIN == 0:
             run_cycle("capture", capture.main)
 

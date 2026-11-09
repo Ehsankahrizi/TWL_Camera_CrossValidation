@@ -27,6 +27,9 @@ flowchart TD
             P1 --> P3
             P2 --> P3 --> P4
         end
+        subgraph REP["②b Ground reports — after each plan"]
+            R1["NWS Local Storm Reports (IEM):<br/>flood reports ≤ 20 km, window −3 h … +6 h<br/>re-checked until 42 h after the window"]
+        end
         subgraph CAP["② Capture — every 15 min (:00 :15 :30 :45)"]
             C1{"Window open now?"}
             C2["Live cameras (traffic, Windy):<br/>video frame (ffmpeg) or snapshot, larger kept;<br/>record image time, age, stale, skip frozen"]
@@ -38,7 +41,9 @@ flowchart TD
     end
     PAGES --> P1
     PAGES --> P2
-    P4 --> S3[("S3 bucket bil6-twl-camera-crossval-858933856877<br/>schedule/schedule.json<br/>events/{date}/{event_id}/event.json + JPEG frames")]
+    P4 --> S3[("S3 bucket bil6-twl-camera-crossval-858933856877<br/>schedule/schedule.json<br/>events/{date}/{event_id}/event.json + JPEG frames<br/>news/{date}/{event_id}/lsr.json")]
+    S3 --> R1
+    R1 --> S3
     S3 --> C1
     S3 --> C3
     C2 --> S3
@@ -46,6 +51,7 @@ flowchart TD
 
     S3 --> SYNC["③ TWLBoxSync.app on the lab Mac (hourly)<br/>aws s3 sync → Box Drive"]
     SYNC --> BOX[("Box: CamerData/TWL_CrossValidation_captures<br/>{date}/{event_id}/event.json + camera folders")]
+    SYNC --> NEWS[("Box: CamerData/TWL_CrossValidation_news<br/>lsr.json per event with reports + HTF_LSR_reports.xlsx")]
     BOX --> LAB["④ Reviewer fills HTF_camera_review.xlsx<br/>Has the image flooded? Yes / No / NaN / Invalid per camera"]
     LAB --> EVAL["⑤ tools/evaluate.py<br/>hits · false alarms · success ratio · FAR"]
 ```
@@ -53,6 +59,17 @@ flowchart TD
 \* WebCOOS runs only if a WebCOOS token is provided (see [Credentials](#credentials)).
 
 Traffic cameras come from [Road511](https://map.road511.com/) for every coastal state except Alabama, which Road511 does not carry. Alabama's cameras come from ALDOT's [ALGO Traffic](https://algotraffic.com) API (`api.algotraffic.com/v4.0/Cameras`, public cameras only, IDs `AL-cam-<id>`). Its video streams are DRM-encrypted, so only the 1280×720 snapshot is saved.
+
+### Ground reports (NWS Local Storm Reports)
+
+A second, independent check of the forecast. When an NWS office learns of flooding (from spotters, emergency managers, broadcast media, social media or a tide gauge) it issues a Local Storm Report with a time, a place and a remark, for example *"Social media video received of water covering Flagler Drive at the intersection with Banyan Blvd."*. The [Iowa Environmental Mesonet](https://mesonet.agron.iastate.edu/lsr/) archives every LSR as GeoJSON, free and without a key.
+
+`crossval/reports.py` runs after every planning cycle. For each event in the schedule it keeps the flood reports (`COASTAL FLOOD`, `FLOOD`, `FLASH FLOOD`) within 20 km of the HTF point, from 3 h before the window to 6 h after it, and writes them to `news/<date>/<event_id>/lsr.json`. Each report has its time (UTC and local), hours from the window (negative before, 0 inside, positive after), distance, type, place, who reported it, the remark and a link to the NWS product.
+
+- **Late reports:** LSRs are sometimes issued hours or a day late, so each event is re-checked until 42 h after its window. `final: true` marks the last check. An empty list is only meaningful once `final` is true.
+- **Radius:** LSRs are placed at a town or a "2 S Miami Beach"-style offset, not the exact street, so the radius is wider than the camera radius. Use `distance_km` and `hours_from_window` to apply a stricter match.
+- **No report ≠ no flood:** most minor tidal flooding is never reported. LSRs can confirm a flood but cannot prove there was none. In a backtest of 605 events (24 Sep – 9 Nov 2026), 72 had at least one report within 20 km.
+- **Backfill:** `S3_BUCKET=bil6-twl-camera-crossval-858933856877 STATE_DIR=/tmp/twl-state python -m crossval.reports --all` checks every event already in S3.
 
 **Why live and archive differ:**
 - **Live cameras:** traffic cameras and Windy webcams keep no history, so their frames must be grabbed *during* the window.
@@ -296,6 +313,7 @@ A launchd agent (`~/Library/LaunchAgents/com.ehsankahrizi.twl-crossval-sync.plis
   - **Safety checks:** the new file is built outside Box and only replaces the old one after checking that every earlier answer is in it. If a needed column header was renamed, nothing is written and the log says why. The previous file is backed up first to `~/Library/Application Support/TWLBoxSync/review_backups/` (last 300 kept); Box version history is a second fallback.
 - **How files reach Box:** `aws s3 sync` fills a local mirror outside Box (`~/Library/Application Support/TWLBoxSync/mirror`, about 1 GB), so only new frames are downloaded. New and changed files are then copied into Box with the reviewer folder names (see [Output](#output)). **Do not sync S3 straight into Box or rename Box folders by hand:** the next `aws s3 sync` would download the original folders again.
 - **Python:** the app runs a venv built on Homebrew Python, `.venv/bin/python` in this repo. The Mac's `/usr/bin/python3` stops working after every Xcode update until the license is accepted again. To create the venv: `/opt/homebrew/bin/python3 -m venv .venv && .venv/bin/pip install openpyxl`.
+- **Storm reports:** with `--news-dest` (the app passes `CamerData/TWL_CrossValidation_news`), `s3://…/news/` is synced into a second mirror (`~/Library/Application Support/TWLBoxSync/news_mirror`). Events with at least one report get a folder with the same name as their captures folder, holding `lsr.json`. `HTF_LSR_reports.xlsx` there is rewritten each hour (skipped while open in Excel). Its *Reports* sheet has one row per report; its *Events* sheet has one row per event checked, including those with none. Nothing in it is typed by hand, so it is safe to rewrite.
 - **Run it now:** `open ~/Developer/TWLBoxSync.app`
 
 **What the Box folder contains**
@@ -387,6 +405,8 @@ All tunable values are in `crossval/config.py`:
 | Stale threshold | 30 min |
 | Control events per forecast run | 0 (off; env `CONTROL_MAX_PER_RUN`) |
 | Image width | ≤ 1920 px |
+| Storm-report radius | 20 km |
+| Storm-report time span | window −3 h … +6 h, re-checked until +42 h |
 
 ## Limitations
 
