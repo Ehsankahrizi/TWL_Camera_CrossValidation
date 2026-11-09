@@ -56,6 +56,41 @@ def _parse_road511(c, names):
     }
 
 
+# Alabama is not in Road511 (checked Nov 2026); ALDOT publishes its own camera list.
+ALGO_API = "https://api.algotraffic.com/v4.0/Cameras"
+_algo, _algo_at = None, None
+
+
+def _algo_cameras():
+    """Public ALDOT cameras, re-read every 6 h (the runner process stays up for days)."""
+    global _algo, _algo_at
+    if _algo is None or (utcnow() - _algo_at).total_seconds() > 6 * 3600:
+        j = http_json(ALGO_API)
+        if isinstance(j, list):
+            _algo = [c for c in j if c.get("accessLevel") == "Public"]
+        _algo_at = utcnow()                              # on failure keep the last list
+    return _algo or []
+
+
+def _parse_algo(c):
+    loc = c.get("location") or {}
+    road, cross = loc.get("displayRouteDesignator") or "", loc.get("displayCrossStreet") or ""
+    return {
+        "source": "traffic",
+        "id": f"AL-cam-{c['id']}",
+        "name": f"{road} @ {cross}" if road and cross else road or cross or "Traffic camera",
+        "lat": loc["latitude"], "lon": loc["longitude"],
+        "provider": "ALGO Traffic · AL",
+        "road": road,
+        "direction": loc.get("direction") or "",
+        "online": True,
+        "archive": False,
+        "image_url": c.get("snapshotImageUrl"),          # 1280x720
+        "video_url": None,                               # HLS is DRM-encrypted (EZDRM); ffmpeg hangs on it
+        "page_url": c.get("permLink") or "https://algotraffic.com/",
+    }
+
+
 def traffic_near(lat, lon, km=config.CAMERA_RADIUS_KM):
     s, w, n, e = _bbox(lat, lon, km)
     names, cams, cursor = {}, [], None
@@ -74,6 +109,11 @@ def traffic_near(lat, lon, km=config.CAMERA_RADIUS_KM):
         cursor = j.get("next_cursor") if j.get("has_more") else None
         if not cursor:
             break
+    for c in _algo_cameras():
+        loc = c.get("location") or {}
+        if (isinstance(loc.get("latitude"), (int, float)) and isinstance(loc.get("longitude"), (int, float))
+                and s <= loc["latitude"] <= n and w <= loc["longitude"] <= e):
+            cams.append(_parse_algo(c))
     out = []
     for c in cams:
         c["distance_km"] = round(dist_km(lat, lon, c["lat"], c["lon"]), 3)
