@@ -22,7 +22,7 @@ flowchart TD
         subgraph PLAN["① Plan — 01:50 / 07:50 / 13:50 / 19:50 UTC"]
             P1["For each HTF point: hours with TWL ≥ threshold<br/>(runs < 3 h apart merged) → exceedance window"]
             P2["Optional (off by default): sample points forecast BELOW threshold<br/>→ control window at forecast peak"]
-            P3["Find cameras ≤ 5 km:<br/>traffic/511 · USGS HIVIS · Windy · WebCOOS*"]
+            P3["Find cameras ≤ 5 km:<br/>traffic (Road511 + ALGO AL) · USGS HIVIS · Windy · WebCOOS*"]
             P4["Same point + overlapping window already planned?<br/>→ update it, add new cameras, keep each run's forecast"]
             P1 --> P3
             P2 --> P3 --> P4
@@ -51,6 +51,8 @@ flowchart TD
 ```
 
 \* WebCOOS runs only if a WebCOOS token is provided (see [Credentials](#credentials)).
+
+Traffic cameras come from [Road511](https://map.road511.com/) for every coastal state except Alabama, which Road511 does not carry. Alabama's cameras come from ALDOT's [ALGO Traffic](https://algotraffic.com) API (`api.algotraffic.com/v4.0/Cameras`, public cameras only, IDs `AL-cam-<id>`). Its video streams are DRM-encrypted, so only the 1280×720 snapshot is saved.
 
 **Why live and archive differ:**
 - **Live cameras:** traffic cameras and Windy webcams keep no history, so their frames must be grabbed *during* the window.
