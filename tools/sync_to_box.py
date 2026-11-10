@@ -245,98 +245,112 @@ def publish_news(news_mirror, news_dest, capture_mirror):
 
 
 def news_page(lsr, news, folder_name):
-    """Flood_reports.html: a map of the HTF point and the NWS reports, a card per report
-    (remark, links to the NWS product and Google Maps), then the news articles by score."""
+    """Flood_reports.html: a plain report page with a map of the HTF point and the NWS
+    reports, a table of the NWS reports (links to the NWS text and Google Maps), and a
+    table of the news articles by score."""
     from html import escape as esc
-
-    def when(r):
-        h = r["hours_from_window"]
-        return "during the forecast window" if h == 0 else f"{abs(h):g} h {'before' if h < 0 else 'after'} the window"
 
     def short(t):
         return esc((t or "")[:16].replace("T", " "))
+
+    def rel_h(h):
+        if h is None:
+            return ""
+        return "in window" if h == 0 else f"{h:+g} h"
 
     base = lsr or news
     reports = (lsr or {}).get("reports") or []
     articles = (news or {}).get("articles") or []
     w = base.get("window", {})
-    cards = []
-    for i, r in enumerate(reports, 1):
-        mag = f" · {esc(str(r['magnitude']))} {esc(r.get('unit') or '')}" if r.get("magnitude") else ""
-        links = [f'<a class="btn" href="{esc(r["product_url"])}" target="_blank">Open official NWS report</a>'] if r.get("product_url") else []
-        links.append(f'<a class="btn ghost" href="https://www.google.com/maps?q={r["lat"]},{r["lon"]}" target="_blank">Google Maps</a>')
-        cards.append(f"""<article>
-  <div class="num">{i}</div>
-  <div>
-    <h3>{esc(r['type'].title())} · {esc(r.get('city') or '')}, {esc(r.get('state') or '')}</h3>
-    <p class="meta">{short(r.get('time_local') or r['time'])} local · {when(r)} · {r['distance_km']:g} km from the HTF point · reported by {esc(r.get('source') or 'unknown')}{mag}</p>
-    <blockquote>{esc(r.get('remark') or '(no remark)')}</blockquote>
-    <p>{' '.join(links)}</p>
-  </div>
-</article>""")
+    radius = ((lsr or {}).get("search") or {}).get("radius_km", 20)
+    final = all(x.get("final") for x in (lsr, news) if x)
+    checked = max(x["checked_at"] for x in (lsr, news) if x)
 
-    def art(a):
-        h = a.get("hours_from_window_start")
-        rel = "" if h is None else f" · {abs(h):g} h {'before' if h < 0 else 'after'} the window start"
-        return (f'<li class="art"><span class="tag {a["label"]}">{a["label"]}</span> '
-                f'<a href="{esc(a["url"] or "")}" target="_blank">{esc(a["title"])}</a>'
-                f'<div class="meta">{esc(a.get("source") or "")} · {short(a.get("published_local") or a.get("published"))} local{rel}'
-                f' · score {a["score"]} ({esc(", ".join(a["reasons"]) or "no keywords")})</div></li>')
+    rows = []
+    for i, r in enumerate(reports, 1):
+        links = []
+        if r.get("product_url"):
+            links.append(f'<a href="{esc(r["product_url"])}" target="_blank">NWS text</a>')
+        links.append(f'<a href="https://www.google.com/maps?q={r["lat"]},{r["lon"]}" target="_blank">map</a>')
+        mag = f" ({esc(str(r['magnitude']))} {esc(r.get('unit') or '')})" if r.get("magnitude") else ""
+        rows.append(f"<tr><td class=n>{i}</td><td class=nw>{short(r.get('time_local') or r['time'])}</td>"
+                    f"<td class=nw>{rel_h(r['hours_from_window'])}</td><td class=r>{r['distance_km']:.1f}</td>"
+                    f"<td>{esc(r['type'].title())}{mag}</td><td>{esc(r.get('city') or '')}, {esc(r.get('state') or '')}</td>"
+                    f"<td>{esc(r.get('source') or '')}</td><td class=nw>{' · '.join(links)}</td></tr>"
+                    f"<tr class=rem><td></td><td colspan=7>{esc(r.get('remark') or '(no remark)')}</td></tr>")
+    if rows:
+        nws_html = ("<table class=nws><thead><tr><th>#</th><th>Time (local)</th><th>vs. window</th><th>km</th><th>Type</th>"
+                    "<th>Location</th><th>Reported by</th><th>Links</th></tr></thead><tbody>"
+                    + "".join(rows) + "</tbody></table>")
+    else:
+        nws_html = "<p>None within the search area and time. Most minor tidal flooding is never reported to NWS.</p>"
+
+    def art_rows(items):
+        out = []
+        for a in items:
+            h = a.get("hours_from_window_start")
+            rel = "" if h is None else f"<br><span class=why>{h:+g} h vs. window start</span>"
+            out.append(f"<tr><td class=nw>{esc(a['label'])}</td><td class=r>{a['score']}</td>"
+                       f"<td class=nw>{short(a.get('published_local') or a.get('published'))}{rel}</td>"
+                       f"<td>{esc(a.get('source') or '')}</td>"
+                       f"<td><a href=\"{esc(a['url'] or '')}\" target=\"_blank\">{esc(a['title'])}</a>"
+                       f"<br><span class=why>{esc(', '.join(a['reasons']) or 'no keywords matched')}</span></td></tr>")
+        return ("<table><thead><tr><th>Label</th><th>Score</th><th>Published (local)</th>"
+                "<th>Outlet</th><th>Headline</th></tr></thead><tbody>" + "".join(out) + "</tbody></table>")
 
     shown = [a for a in articles if a["label"] != "unlikely"]
     hidden = [a for a in articles if a["label"] == "unlikely"]
     if news:
         p = news.get("place") or {}
         where = ", ".join(x for x in (p.get("place"), p.get("county"), p.get("state")) if x)
-        news_html = (f'<h2>News articles ({len(shown)} likely or possible)</h2>'
-                     f'<p class="sub">Google News, searched for {esc(where)} with flood words, published '
+        news_html = (f'<p class=note>Google News search for {esc(where)} with flood terms, published '
                      f'{esc(news["search"]["published_from"])} to {esc(news["search"]["published_before"])}. '
-                     'Labels come from keywords in the headline only: read the article before counting it as evidence.</p>'
-                     + (f'<ul>{"".join(art(a) for a in shown)}</ul>' if shown else '<p class="sub">No likely or possible articles.</p>')
-                     + (f'<details><summary>{len(hidden)} unlikely articles</summary><ul>{"".join(art(a) for a in hidden)}</ul></details>' if hidden else ''))
+                     'Labels are from headline keywords only; read an article before using it as evidence.</p>'
+                     + (art_rows(shown) if shown else "<p>No likely or possible articles.</p>")
+                     + (f"<details><summary>{len(hidden)} articles labelled unlikely</summary>{art_rows(hidden)}</details>" if hidden else ""))
     else:
-        news_html = '<h2>News articles</h2><p class="sub">Not checked yet.</p>'
-    nws_html = (f'<h2>NWS storm reports ({len(reports)})</h2>' + ("".join(cards) if cards else
-                '<p class="sub">No NWS flood report within the search area and time. Most minor tidal flooding is never reported.</p>'))
-    pts = json.dumps([{"lat": r["lat"], "lon": r["lon"], "n": i, "t": r["type"].title(), "c": r.get("city") or ""}
-                      for i, r in enumerate(reports, 1)])
-    radius = ((lsr or {}).get("search") or {}).get("radius_km", 20)
-    final = all(x.get("final") for x in (lsr, news) if x)
-    checked = max(x["checked_at"] for x in (lsr, news) if x)
+        news_html = "<p>Not checked yet.</p>"
+
+    pts = json.dumps([{"lat": r["lat"], "lon": r["lon"], "n": i} for i, r in enumerate(reports, 1)])
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flood reports · {esc(folder_name)}</title>
+<title>{esc(folder_name)} flood reports</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
- :root {{ --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e2dc; --accent:#0b5cad; --good:#1f7a3a; --mid:#9a6700; }}
- @media (prefers-color-scheme: dark) {{ :root {{ --bg:#161615; --card:#21211f; --ink:#ececea; --muted:#a3a39c; --line:#34342f; --accent:#6aa8ec; --good:#5cc27a; --mid:#e0b04a; }} }}
- body {{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, system-ui, sans-serif; }}
- main {{ max-width:900px; margin:0 auto; padding:24px 16px 48px; }}
- h1 {{ font-size:22px; margin:0 0 4px; }} h2 {{ font-size:18px; margin:28px 0 6px; }} h3 {{ font-size:16px; margin:0 0 2px; }}
- .meta, .sub {{ color:var(--muted); font-size:13px; margin:0 0 8px; }}
- #map {{ height:360px; border-radius:10px; border:1px solid var(--line); margin:16px 0 8px; }}
- article {{ display:flex; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px; }}
- .num {{ flex:none; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:600; font-size:13px; }}
- blockquote {{ margin:8px 0 10px; padding:8px 12px; border-left:3px solid var(--accent); background:var(--bg); border-radius:4px; }}
- .btn {{ display:inline-block; padding:6px 12px; border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; font-size:13px; margin:0 6px 6px 0; }}
- .btn.ghost {{ background:none; color:var(--accent); border:1px solid var(--accent); }}
- ul {{ list-style:none; padding:0; margin:0; }}
- .art {{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; }}
- .art a {{ color:var(--ink); font-weight:600; text-decoration:none; }} .art a:hover {{ color:var(--accent); text-decoration:underline; }}
- .art .meta {{ margin:4px 0 0; }}
- .tag {{ display:inline-block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:1px 7px; border-radius:10px; margin-right:6px; border:1px solid currentColor; }}
- .tag.likely {{ color:var(--good); }} .tag.possible {{ color:var(--mid); }} .tag.unlikely {{ color:var(--muted); }}
- details {{ margin-top:10px; }} summary {{ cursor:pointer; color:var(--muted); font-size:14px; margin-bottom:8px; }}
- .note {{ color:var(--muted); font-size:13px; margin-top:24px; }}
+ body {{ margin:0; background:#fff; color:#111; font:14px/1.45 Georgia, "Times New Roman", serif; }}
+ main {{ max-width:1000px; margin:0 auto; padding:20px 16px 40px; }}
+ h1 {{ font-size:20px; font-weight:normal; margin:0 0 6px; }}
+ h2 {{ font-size:15px; margin:26px 0 6px; padding-bottom:3px; border-bottom:1px solid #999; }}
+ dl {{ display:grid; grid-template-columns:max-content 1fr; gap:1px 14px; margin:0 0 12px; font-size:13px; }}
+ dt {{ color:#555; }} dd {{ margin:0; }}
+ #map {{ height:340px; border:1px solid #999; }}
+ .cap, .note {{ font-size:12px; color:#555; margin:4px 0 8px; }}
+ table {{ border-collapse:collapse; width:100%; font:12.5px/1.35 Arial, Helvetica, sans-serif; }}
+ th, td {{ border:1px solid #ccc; padding:4px 6px; vertical-align:top; text-align:left; }}
+ th {{ background:#f2f2f2; font-weight:bold; }}
+ td.r {{ text-align:right; }} td.n {{ text-align:center; }} .nw {{ white-space:nowrap; }} .why {{ color:#666; font-size:11.5px; }}
+ tr.rem td {{ border-top:none; padding-top:0; padding-bottom:8px; font-style:italic; }}
+ table.nws tbody tr:not(.rem) td {{ border-bottom:none; }} table.nws tr.rem td:first-child {{ border-right:none; }}
+ a {{ color:#1a0dab; }} a:visited {{ color:#609; }}
+ details {{ margin-top:8px; }} summary {{ cursor:pointer; font-size:13px; margin-bottom:6px; }}
+ .mk {{ background:#fff; border:1px solid #000; font:bold 11px Arial, sans-serif; width:16px; height:16px; line-height:16px; text-align:center; }}
+ @media (max-width:700px) {{ table {{ display:block; overflow-x:auto; }} }}
 </style></head>
 <body><main>
-<h1>{esc(folder_name)}: {len(reports)} NWS report{'s' if len(reports) != 1 else ''}, {len(shown)} news article{'s' if len(shown) != 1 else ''}</h1>
-<p class="sub">HTF point {base['htf_id']} ({base['lat']:.4f}, {base['lon']:.4f}) · forecast window {short(w.get('start_local') or w.get('start'))} → {short(w.get('end_local') or w.get('end'))} local · checked {short(checked)} UTC{'' if final else ' (not final yet: more may be added)'}</p>
+<h1>{esc(folder_name)}</h1>
+<dl>
+ <dt>HTF point</dt><dd>{base['htf_id']} ({base['lat']:.4f}, {base['lon']:.4f})</dd>
+ <dt>Forecast window</dt><dd>{short(w.get('start_local') or w.get('start'))} to {short(w.get('end_local') or w.get('end'))} local</dd>
+ <dt>Found</dt><dd>{len(reports)} NWS report{'s' if len(reports) != 1 else ''}, {len(shown)} likely/possible news article{'s' if len(shown) != 1 else ''}</dd>
+ <dt>Last checked</dt><dd>{short(checked)} UTC{'' if final else ' (not final; more may be added)'}</dd>
+</dl>
 <div id="map"></div>
-<p class="sub">Orange: HTF point. Circle: {radius:g} km NWS search area. Numbers: NWS reports below.</p>
+<p class=cap>Red dot: HTF point. Circle: {radius:g} km NWS search radius. Numbered boxes: NWS reports in the table below.</p>
+<h2>NWS Local Storm Reports</h2>
 {nws_html}
+<h2>News articles</h2>
 {news_html}
-<p class="note">Sources: NWS Local Storm Reports (archived by the Iowa Environmental Mesonet; locations are town-level) and Google News. The same data is in lsr.json and news.json in this folder.</p>
+<p class=note>Sources: NWS Local Storm Reports (Iowa Environmental Mesonet archive; locations are town-level) and Google News. Data files: lsr.json, news.json.</p>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -344,15 +358,15 @@ def news_page(lsr, news, folder_name):
  const map = L.map('map');
  // Esri tiles: OpenStreetMap's servers refuse pages opened from a file (no referrer).
  const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
- const street = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Tiles &copy; Esri'}}).addTo(map);
- const sat = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'}});
+ const street = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Esri'}}).addTo(map);
+ const sat = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'}});
  L.control.layers({{'Streets': street, 'Satellite': sat}}).addTo(map);
- L.circle(htf, {{radius: {radius} * 1000, color: '#0b5cad', weight: 1, fillOpacity: 0.04}}).addTo(map);
- L.circleMarker(htf, {{radius: 8, color: '#fff', weight: 2, fillColor: '#d9480f', fillOpacity: 1}}).addTo(map).bindTooltip('HTF point {base['htf_id']}', {{permanent: true, direction: 'right'}});
+ L.control.scale({{imperial: false}}).addTo(map);
+ L.circle(htf, {{radius: {radius} * 1000, color: '#333', weight: 1, dashArray: '4 4', fill: false}}).addTo(map);
+ L.circleMarker(htf, {{radius: 6, color: '#000', weight: 1, fillColor: '#d00', fillOpacity: 1}}).addTo(map).bindTooltip('HTF {base['htf_id']}');
  const b = [htf];
  pts.forEach(p => {{ b.push([p.lat, p.lon]);
-   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="num">' + p.n + '</div>', iconSize: [28, 28], iconAnchor: [14, 14]}})}})
-    .addTo(map).bindPopup(p.n + '. ' + p.t + ' · ' + p.c); }});
+   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="mk">' + p.n + '</div>', iconSize: [18, 18], iconAnchor: [9, 9]}})}}).addTo(map); }});
  const fit = () => {{ map.invalidateSize(); if (pts.length) map.fitBounds(L.latLngBounds(b).pad(0.15), {{maxZoom: 13}}); else map.setView(htf, 11); }};
  map.setView(htf, 11); fit();
  window.addEventListener('load', fit); window.addEventListener('resize', fit);
