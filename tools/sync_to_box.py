@@ -371,14 +371,14 @@ def write_news_workbook(news_dest, lsr, news, names):
     wb = Workbook()
     ws = wb.active
     ws.title = "NWS reports"
-    ws.append(["Event folder", "HTF id", "Window start (local)", "Window end (local)", "Report time (local)",
+    ws.append(["Event folder", "Source", "HTF id", "Window start (local)", "Window end (local)", "Report time (local)",
                "Hours from window", "Distance (km)", "Type", "Magnitude", "Unit", "City", "State", "NWS office",
                "Reported by", "Remark", "NWS product", "Final"])
     nw = wb.create_sheet("News")
-    nw.append(["Event folder", "HTF id", "Window start (local)", "Label", "Score", "Headline", "Source",
+    nw.append(["Event folder", "Source", "HTF id", "Window start (local)", "Label", "Score", "Headline", "Source",
                "Published (local)", "Hours from window start", "Why", "Link", "Searched place", "Final"])
     ev_ws = wb.create_sheet("Events")
-    ev_ws.append(["Event folder", "HTF id", "Kind", "Window start (local)", "Window end (local)", "NWS reports",
+    ev_ws.append(["Event folder", "Evidence found", "HTF id", "Kind", "Window start (local)", "Window end (local)", "NWS reports",
                   "Coastal flood reports", "Nearest report (km)", "News likely", "News possible", "News total",
                   "Searched place", "Checked at (UTC)", "Final"])
 
@@ -397,30 +397,32 @@ def write_news_workbook(news_dest, lsr, news, names):
         p = N_.get("place") or {}
         where = ", ".join(x for x in (p.get("place"), p.get("county"), p.get("state")) if x)
         for r in reports:
-            ws.append([name, base["htf_id"], w.get("start_local"), w.get("end_local"), r.get("time_local") or r["time"],
+            ws.append([name, "NWS storm report", base["htf_id"], w.get("start_local"), w.get("end_local"), r.get("time_local") or r["time"],
                        r["hours_from_window"], r["distance_km"], r["type"], r.get("magnitude"), r.get("unit"),
                        r.get("city"), r.get("state"), r.get("wfo"), r.get("source"), r.get("remark"),
                        r.get("product_url"), L_.get("final")])
             if r.get("product_url"):
-                ws.cell(ws.max_row, 16).hyperlink = r["product_url"]
+                ws.cell(ws.max_row, 17).hyperlink = r["product_url"]
             page_link(ws.cell(ws.max_row, 1), eid, has)
         for a in arts:
-            nw.append([name, base["htf_id"], w.get("start_local"), a["label"], a["score"], a["title"], a.get("source"),
+            nw.append([name, "News article", base["htf_id"], w.get("start_local"), a["label"], a["score"], a["title"], a.get("source"),
                        a.get("published_local") or a.get("published"), a.get("hours_from_window_start"),
                        ", ".join(a["reasons"]), a.get("url"), where, N_.get("final")])
             if a.get("url"):
-                nw.cell(nw.max_row, 6).hyperlink = a["url"]
-                nw.cell(nw.max_row, 11).hyperlink = a["url"]
+                nw.cell(nw.max_row, 7).hyperlink = a["url"]
+                nw.cell(nw.max_row, 12).hyperlink = a["url"]
             page_link(nw.cell(nw.max_row, 1), eid, has)
-        ev_ws.append([name, base["htf_id"], base.get("kind"), w.get("start_local"), w.get("end_local"),
+        n_news = (N_.get("n_likely") or 0) + (N_.get("n_possible") or 0)
+        evidence = " + ".join(x for x, ok in (("NWS storm report", reports), ("News article", n_news)) if ok) or "None"
+        ev_ws.append([name, evidence, base["htf_id"], base.get("kind"), w.get("start_local"), w.get("end_local"),
                       L_.get("n_reports"), L_.get("n_coastal_flood"),
                       min((r["distance_km"] for r in reports), default=None),
                       N_.get("n_likely"), N_.get("n_possible"), N_.get("n_articles"), where,
                       max(x["checked_at"] for x in (L_, N_) if x), all(x.get("final") for x in (L_, N_) if x)])
         page_link(ev_ws.cell(ev_ws.max_row, 1), eid, has)
-    for sheet, widths in ((ws, [24, 8, 26, 26, 26, 10, 10, 15, 10, 8, 20, 6, 8, 18, 80, 30, 7]),
-                          (nw, [24, 8, 26, 9, 7, 80, 22, 26, 10, 40, 30, 30, 7]),
-                          (ev_ws, [24, 8, 11, 26, 26, 9, 12, 12, 9, 10, 9, 30, 21, 7])):
+    for sheet, widths in ((ws, [24, 18, 8, 26, 26, 26, 10, 10, 15, 10, 8, 20, 6, 8, 18, 80, 30, 7]),
+                          (nw, [24, 14, 8, 26, 9, 7, 80, 22, 26, 10, 40, 30, 30, 7]),
+                          (ev_ws, [24, 30, 8, 11, 26, 26, 9, 12, 12, 9, 10, 9, 30, 21, 7])):
         for i, wdt in enumerate(widths, 1):
             sheet.column_dimensions[sheet.cell(1, i).column_letter].width = wdt
         for c in sheet[1]:
