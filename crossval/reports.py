@@ -138,8 +138,9 @@ def main():
     print(f"LSR check: {n} events checked, {hits} with flood reports nearby")
 
 
-def backfill_all():
-    """One-off: check every event.json in S3, grouped by date so each IEM request stays small."""
+def backfill_all(check_fn=None, label="Backfill"):
+    """One-off: run check_fn (default: the LSR check) on every event.json in S3, a day at a time."""
+    check_fn = check_fn or check
     from . import store, util
     if not config.S3_BUCKET:
         raise SystemExit("S3_BUCKET is not set")
@@ -155,11 +156,11 @@ def backfill_all():
         for k in by_date[date]:
             store._download(k)
             events.append(read_json(config.STATE_ROOT / k))
-        n, h = check([e for e in events if e], now, force=True)
+        n, h = check_fn([e for e in events if e], now, force=True)
         total, hits = total + n, hits + h
-        print(f"  {date}: {n} events, {h} with reports")
+        print(f"  {date}: {n} events, {h} with findings", flush=True)
     n = store.push_state()
-    print(f"Backfill: {total} events checked, {hits} with flood reports; uploaded {n} files")
+    print(f"{label}: {total} events checked, {hits} with findings; uploaded {n} files")
 
 
 if __name__ == "__main__":
