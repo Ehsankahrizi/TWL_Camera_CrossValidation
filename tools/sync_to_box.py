@@ -316,24 +316,26 @@ def news_page(lsr, news, folder_name):
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(folder_name)} flood reports</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
- body {{ margin:0; background:#fff; color:#111; font:14px/1.45 Georgia, "Times New Roman", serif; }}
+ body {{ margin:0; background:#fff; color:#1b1b1b; font:16px/1.55 "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif; }}
  main {{ max-width:1000px; margin:0 auto; padding:20px 16px 40px; }}
- h1 {{ font-size:20px; font-weight:normal; margin:0 0 6px; }}
- h2 {{ font-size:15px; margin:26px 0 6px; padding-bottom:3px; border-bottom:1px solid #999; }}
- dl {{ display:grid; grid-template-columns:max-content 1fr; gap:1px 14px; margin:0 0 12px; font-size:13px; }}
+ h1 {{ font-size:24px; font-weight:600; margin:0 0 8px; }}
+ h2 {{ font-size:19px; font-weight:600; margin:30px 0 8px; padding-bottom:4px; border-bottom:1px solid #999; }}
+ dl {{ display:grid; grid-template-columns:max-content 1fr; gap:2px 16px; margin:0 0 14px; font-size:15px; }}
  dt {{ color:#555; }} dd {{ margin:0; }}
  #map {{ height:340px; border:1px solid #999; }}
- .cap, .note {{ font-size:12px; color:#555; margin:4px 0 8px; }}
- table {{ border-collapse:collapse; width:100%; font:12.5px/1.35 Arial, Helvetica, sans-serif; }}
- th, td {{ border:1px solid #ccc; padding:4px 6px; vertical-align:top; text-align:left; }}
- th {{ background:#f2f2f2; font-weight:bold; }}
- td.r {{ text-align:right; }} td.n {{ text-align:center; }} .nw {{ white-space:nowrap; }} .why {{ color:#666; font-size:11.5px; }}
+ .cap, .note {{ font-size:14px; color:#565c65; margin:6px 0 10px; }}
+ table {{ border-collapse:collapse; width:100%; font-size:15px; line-height:1.45; font-variant-numeric:tabular-nums; }}
+ th, td {{ border:1px solid #ccc; padding:6px 8px; vertical-align:top; text-align:left; }}
+ th {{ background:#f0f0f0; font-weight:600; }}
+ td.r {{ text-align:right; }} td.n {{ text-align:center; }} .nw {{ white-space:nowrap; }} .why {{ color:#565c65; font-size:13.5px; }}
  tr.rem td {{ border-top:none; padding-top:0; padding-bottom:8px; font-style:italic; }}
  table.nws tbody tr:not(.rem) td {{ border-bottom:none; }} table.nws tr.rem td:first-child {{ border-right:none; }}
  a {{ color:#1a0dab; }} a:visited {{ color:#609; }}
- details {{ margin-top:8px; }} summary {{ cursor:pointer; font-size:13px; margin-bottom:6px; }}
- .mk {{ background:#fff; border:1px solid #000; font:bold 11px Arial, sans-serif; width:16px; height:16px; line-height:16px; text-align:center; }}
+ details {{ margin-top:10px; }} summary {{ cursor:pointer; font-size:15px; margin-bottom:8px; }}
+ .mk {{ background:#fff; border:1px solid #000; font:600 12px "Source Sans 3", Arial, sans-serif; width:18px; height:18px; line-height:18px; text-align:center; }}
  @media (max-width:700px) {{ table {{ display:block; overflow-x:auto; }} }}
 </style></head>
 <body><main>
@@ -366,7 +368,7 @@ def news_page(lsr, news, folder_name):
  L.circleMarker(htf, {{radius: 6, color: '#000', weight: 1, fillColor: '#d00', fillOpacity: 1}}).addTo(map).bindTooltip('HTF {base['htf_id']}');
  const b = [htf];
  pts.forEach(p => {{ b.push([p.lat, p.lon]);
-   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="mk">' + p.n + '</div>', iconSize: [18, 18], iconAnchor: [9, 9]}})}}).addTo(map); }});
+   L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="mk">' + p.n + '</div>', iconSize: [20, 20], iconAnchor: [10, 10]}})}}).addTo(map); }});
  const fit = () => {{ map.invalidateSize(); if (pts.length) map.fitBounds(L.latLngBounds(b).pad(0.15), {{maxZoom: 13}}); else map.setView(htf, 11); }};
  map.setView(htf, 11); fit();
  window.addEventListener('load', fit); window.addEventListener('resize', fit);
