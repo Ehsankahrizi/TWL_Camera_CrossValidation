@@ -377,85 +377,272 @@ def news_page(lsr, news, folder_name):
 """
 
 
+FLOOD_ANSWERS = ["Yes", "No", "NaN", "Invalid"]
+ANSWER_HEADER = "Does it report flooding here?"
+NOTES_HEADER = "Notes (optional)"
+KEY_HEADER = "Row key (hidden)"
+# (header, width, key). Order = column order on the "All reports" sheet.
+FLOOD_COLUMNS = [
+    ("Event folder", 22, "folder"),
+    ("Source", 17, "source"),
+    ("HTF id", 7, "htf_id"),
+    ("Time (local)", 20, "time"),
+    ("Hours from window", 9, "hours"),
+    ("Text (NWS remark or news headline)", 70, "text"),
+    (ANSWER_HEADER, 14, "answer"),
+    (NOTES_HEADER, 36, "notes"),
+    ("News label", 9, "label"),
+    ("News score", 7, "score"),
+    ("NWS report type", 14, "nws_type"),
+    ("Place", 26, "place"),
+    ("Reported by / outlet", 20, "by"),
+    ("Distance (km)", 9, "distance"),
+    ("Why this news label", 36, "why"),
+    ("Link", 28, "link"),
+    ("Window start (local)", 20, "w_start"),
+    ("Window end (local)", 20, "w_end"),
+    ("Final", 6, "final"),
+    (KEY_HEADER, 30, "key"),
+]
+FCOL = {key: i + 1 for i, (_, _, key) in enumerate(FLOOD_COLUMNS)}
+FLOOD_BACKUPS = Path("~/Library/Application Support/TWLBoxSync/flood_backups").expanduser()
+FLOOD_QUIET_MIN = 30          # skip the hourly rewrite if someone saved the workbook more recently
+
+
+def flood_row_key(eid, source, item):
+    """Stable id of one report/article row, so typed answers stay with it across rebuilds."""
+    if source == "NWS storm report":
+        return f"{eid}|nws|{item.get('product_id')}|{item['time']}|{item['lat']},{item['lon']}"
+    return f"{eid}|news|{item.get('url') or item['title']}"
+
+
+def flood_answers(path):
+    """{row key: {column key: value}} for rows of an existing workbook where someone typed an
+    answer or a note. Raises ValueError if the sheet has answers but cannot be matched safely."""
+    if not path.exists():
+        return {}
+    from openpyxl import load_workbook
+    wb = load_workbook(path)
+    if "All reports" not in wb.sheetnames:
+        return {}
+    ws = wb["All reports"]
+    head = {c.value: i for i, c in enumerate(ws[1])}
+    if ANSWER_HEADER not in head:
+        return {}                                        # older version without answer columns
+    missing = [h for h in (ANSWER_HEADER, NOTES_HEADER, KEY_HEADER) if h not in head]
+    if missing:
+        raise ValueError(f"column header(s) changed or missing: {missing}")
+    by_header = {h: key for h, _, key in FLOOD_COLUMNS}
+    out = {}
+    for r in ws.iter_rows(min_row=2, values_only=True):
+        vals = {by_header[h]: r[i] for h, i in head.items() if h in by_header}
+        if vals.get("key") and (vals.get("answer") not in (None, "") or vals.get("notes") not in (None, "")):
+            out[vals["key"]] = vals
+    return out
+
+
 def write_news_workbook(news_dest, lsr, news, names):
-    """HTF_flood_reports.xlsx: sheet "All reports" has one row per NWS report and per news
-    article (column B "Source" tells which); sheet "Events" has one row per event checked."""
+    """HTF_flood_reports.xlsx.
+
+    "All reports": one row per NWS report and per news article (column B "Source"), with two
+    yellow columns to fill in by hand: a Yes/No/NaN/Invalid drop-down and notes. Typed answers
+    are carried over on every rebuild (matched by a hidden row key; rows that disappear keep
+    their answer at the bottom), the new file is checked before it replaces the old one, and
+    the old one is backed up. "Events": one row per event checked. "Instructions", "Progress".
+    """
+    import tempfile
+    from datetime import datetime, timezone
+    from openpyxl import Workbook
+    from openpyxl.comments import Comment
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.worksheet.datavalidation import DataValidation
     out = news_dest / WORKBOOK
     if (news_dest / f"~${out.name}").exists():
         print(f"{out.name} is open in Excel; not updated")
         return
-    from openpyxl import Workbook
-    from openpyxl.styles import Font
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "All reports"
-    ws.append(["Event folder", "Source", "HTF id", "Window start (local)", "Window end (local)", "Time (local)",
-               "Hours from window", "News label", "News score", "NWS report type", "Text (NWS remark or news headline)",
-               "Place", "Reported by / outlet", "Distance (km)", "Why this news label", "Link", "Final"])
-    ev_ws = wb.create_sheet("Events")
-    ev_ws.append(["Event folder", "Evidence found", "HTF id", "Kind", "Window start (local)", "Window end (local)",
-                  "NWS reports", "Coastal flood reports", "Nearest report (km)", "News likely", "News possible",
-                  "News total", "Searched place", "Checked at (UTC)", "Final"])
+    if out.exists() and datetime.now().timestamp() - out.stat().st_mtime < FLOOD_QUIET_MIN * 60 and flood_answers(out):
+        print(f"{out.name} was saved less than {FLOOD_QUIET_MIN} min ago (someone may be editing); not updated")
+        return
+    try:
+        old = flood_answers(out)
+    except ValueError as e:
+        print(f"{out.name} not updated: {e}")
+        return
+    yellow = PatternFill("solid", start_color="FFFF00")
+    blue = Font(color="0563C1", underline="single")
 
-    def page_link(cell, eid, has):
-        rel = names.get(eid)
-        if rel and has:
-            cell.hyperlink = (rel / PAGE).as_posix()
-
-    def link(url):
-        if url:
-            ws.cell(ws.max_row, 16).hyperlink = url
-            ws.cell(ws.max_row, 11).hyperlink = url
-
+    # ── rows ──
+    rows = []
+    events = []
     for eid in sorted(set(lsr) | set(news)):
         L_, N_ = lsr.get(eid) or {}, news.get(eid) or {}
         base = L_ or N_
         w = base.get("window", {})
         name = names[eid].name if eid in names else eid
+        page = (names[eid] / PAGE).as_posix() if eid in names else None
         reports, arts = L_.get("reports") or [], N_.get("articles") or []
         has = bool(reports) or any(a["label"] != "unlikely" for a in arts)
         p = N_.get("place") or {}
         where = ", ".join(x for x in (p.get("place"), p.get("county"), p.get("state")) if x)
-        w0, w1 = (parse_iso(w[k]) if w.get(k) else None for k in ("start", "end"))
+        common = {"folder": name, "page": page if has else None, "htf_id": base["htf_id"],
+                  "w_start": w.get("start_local"), "w_end": w.get("end_local")}
         for r in reports:
-            ws.append([name, "NWS storm report", base["htf_id"], w.get("start_local"), w.get("end_local"),
-                       r.get("time_local") or r["time"], r["hours_from_window"], None, None, r["type"],
-                       r.get("remark"), ", ".join(x for x in (r.get("city"), r.get("state")) if x), r.get("source"),
-                       r["distance_km"], None, r.get("product_url"), L_.get("final")])
-            link(r.get("product_url"))
-            page_link(ws.cell(ws.max_row, 1), eid, has)
+            rows.append(dict(common, source="NWS storm report", time=r.get("time_local") or r["time"],
+                             hours=r["hours_from_window"], text=r.get("remark"), nws_type=r["type"],
+                             place=", ".join(x for x in (r.get("city"), r.get("state")) if x), by=r.get("source"),
+                             distance=r["distance_km"], link=r.get("product_url"), final=L_.get("final"),
+                             key=flood_row_key(eid, "NWS storm report", r)))
+        w0, w1 = (parse_iso(w[k]) if w.get(k) else None for k in ("start", "end"))
         for a in arts:
             t = parse_iso(a["published"]) if a.get("published") else None
             h = None
             if t and w0 and w1:
                 h = 0.0 if w0 <= t <= w1 else round(((t - w0) if t < w0 else (t - w1)).total_seconds() / 3600, 1)
-            ws.append([name, "News article", base["htf_id"], w.get("start_local"), w.get("end_local"),
-                       a.get("published_local") or a.get("published"), h, a["label"], a["score"], None, a["title"],
-                       where, a.get("source"), None, ", ".join(a["reasons"]), a.get("url"), N_.get("final")])
-            link(a.get("url"))
-            page_link(ws.cell(ws.max_row, 1), eid, has)
+            rows.append(dict(common, source="News article", time=a.get("published_local") or a.get("published"),
+                             hours=h, text=a["title"], label=a["label"], score=a["score"], place=where,
+                             by=a.get("source"), why=", ".join(a["reasons"]), link=a.get("url"), final=N_.get("final"),
+                             key=flood_row_key(eid, "News article", a)))
         n_news = (N_.get("n_likely") or 0) + (N_.get("n_possible") or 0)
-        evidence = " + ".join(x for x, ok in (("NWS storm report", reports), ("News article", n_news)) if ok) or "None"
-        ev_ws.append([name, evidence, base["htf_id"], base.get("kind"), w.get("start_local"), w.get("end_local"),
-                      L_.get("n_reports"), L_.get("n_coastal_flood"),
-                      min((r["distance_km"] for r in reports), default=None),
-                      N_.get("n_likely"), N_.get("n_possible"), N_.get("n_articles"), where,
-                      max(x["checked_at"] for x in (L_, N_) if x), all(x.get("final") for x in (L_, N_) if x)])
-        page_link(ev_ws.cell(ev_ws.max_row, 1), eid, has)
-    for sheet, widths in ((ws, [24, 18, 8, 26, 26, 26, 10, 10, 8, 15, 80, 28, 22, 10, 40, 30, 7]),
-                          (ev_ws, [24, 30, 8, 11, 26, 26, 9, 12, 12, 9, 10, 9, 30, 21, 7])):
-        for i, wdt in enumerate(widths, 1):
-            sheet.column_dimensions[sheet.cell(1, i).column_letter].width = wdt
-        for c in sheet[1]:
-            c.font = Font(bold=True)
-        sheet.freeze_panes = "A2"
-        sheet.auto_filter.ref = sheet.dimensions
-    tmp = news_dest / f".{out.name}.tmp"
-    wb.save(tmp)
-    tmp.replace(out)
+        events.append([name, " + ".join(x for x, ok in (("NWS storm report", reports), ("News article", n_news)) if ok)
+                       or "None", base["htf_id"], base.get("kind"), w.get("start_local"), w.get("end_local"),
+                       L_.get("n_reports"), L_.get("n_coastal_flood"), min((r["distance_km"] for r in reports), default=None),
+                       N_.get("n_likely"), N_.get("n_possible"), N_.get("n_articles"), where,
+                       max(x["checked_at"] for x in (L_, N_) if x), all(x.get("final") for x in (L_, N_) if x),
+                       common["page"]])
+    present = {r["key"] for r in rows}
+    for k, v in old.items():                               # answered rows no longer found: keep them
+        if k not in present:
+            folder = (v.get("folder") or "").replace(" (no longer found)", "")
+            rows.append(dict(v, folder=f"{folder} (no longer found)".strip(), page=None))
+    for r in rows:
+        if r["key"] in old:
+            r["answer"], r["notes"] = old[r["key"]].get("answer"), old[r["key"]].get("notes")
+
+    wb = Workbook()
+    # ── Instructions ──
+    ins = wb.active
+    ins.title = "Instructions"
+    ins.column_dimensions["A"].width = 24
+    ins.column_dimensions["B"].width = 100
+    lines = [
+        ("HTF flood reports review", None), ("", None),
+        ("Your task", "Each row on 'All reports' is one NWS storm report or one news article found near an HTF event. "
+                      "Read it (click the text or the link) and decide whether it reports coastal flooding at this "
+                      "HTF point during this event."),
+        ("What to fill in", f"Only the YELLOW cells: '{ANSWER_HEADER}' (choose from the drop-down) and, if useful, "
+                            f"'{NOTES_HEADER}'. Do not edit other columns; the sheet is rebuilt every hour and "
+                            "keeps only the yellow cells."),
+        ("Yes", "It reports water on roads, yards or other normally dry land near the HTF point, during or "
+                "close to the event window."),
+        ("No", "It is about this place and time but says there was no flooding, or only a forecast or warning "
+               "that did not happen."),
+        ("NaN = cannot tell", "The article cannot be opened (paywall, broken link) or does not say clearly. "
+                              "Write the reason in Notes."),
+        ("Invalid = not relevant", "It is about another place, another date, river or rain flooding only, or an "
+                                   "unrelated topic. Write the reason in Notes."),
+        ("Source (column B)", "'NWS storm report' = official National Weather Service Local Storm Report. "
+                              "'News article' = found by Google News; 'News label' and 'News score' are only a "
+                              "keyword guess from the headline."),
+        ("Event folder", "Click it to open the event's Flood_reports.html page (map and all reports)."),
+        ("Hours from window", "Negative = before the forecast window, 0 = inside it, positive = after it."),
+    ]
+    for i, (a, b) in enumerate(lines, 1):
+        ins.cell(row=i, column=1, value=a).font = Font(bold=True, size=14 if i == 1 else 10)
+        if b:
+            c = ins.cell(row=i, column=2, value=b)
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+            ins.row_dimensions[i].height = 32
+            if a in ("What to fill in",):
+                c.fill = yellow
+
+    # ── All reports ──
+    ws = wb.create_sheet("All reports")
+    for i, (h, wdt, _) in enumerate(FLOOD_COLUMNS, 1):
+        c = ws.cell(row=1, column=i, value=h)
+        c.font = Font(bold=True)
+        c.alignment = Alignment(wrap_text=True, vertical="center")
+        ws.column_dimensions[c.column_letter].width = wdt
+    ws.row_dimensions[1].height = 32
+    dv = DataValidation(type="list", formula1='"' + ",".join(FLOOD_ANSWERS) + '"', allow_blank=True,
+                        error="Choose Yes, No, NaN or Invalid from the list.", errorTitle=ANSWER_HEADER)
+    ws.add_data_validation(dv)
+    for r_i, r in enumerate(rows, 2):
+        for _, _, key in FLOOD_COLUMNS:
+            ws.cell(row=r_i, column=FCOL[key], value=r.get(key))
+        if r.get("page"):
+            ws.cell(row=r_i, column=FCOL["folder"]).hyperlink = r["page"]
+            ws.cell(row=r_i, column=FCOL["folder"]).font = blue
+        if r.get("link"):
+            for key in ("text", "link"):
+                ws.cell(row=r_i, column=FCOL[key]).hyperlink = r["link"]
+                ws.cell(row=r_i, column=FCOL[key]).font = blue
+        for key in ("answer", "notes"):
+            ws.cell(row=r_i, column=FCOL[key]).fill = yellow
+        ws.cell(row=r_i, column=FCOL["answer"]).alignment = Alignment(horizontal="center")
+        dv.add(ws.cell(row=r_i, column=FCOL["answer"]))
+    last = max(2, len(rows) + 1)
+    ws.freeze_panes = "C2"
+    ws.auto_filter.ref = f"A1:{ws.cell(1, len(FLOOD_COLUMNS)).column_letter}{last}"
+    ws.column_dimensions[ws.cell(1, FCOL["key"]).column_letter].hidden = True
+    for key in ("answer", "notes"):
+        ws.cell(row=1, column=FCOL[key]).fill = yellow
+    ws.cell(row=1, column=FCOL["answer"]).comment = Comment(
+        "Yes = reports flooding here during the event; No = says there was none, or only a warning; "
+        "NaN = cannot tell (paywall, unclear); Invalid = other place/date/topic. See Instructions.", "HTF review")
+
+    # ── Events ──
+    ev_ws = wb.create_sheet("Events")
+    ev_ws.append(["Event folder", "Evidence found", "HTF id", "Kind", "Window start (local)", "Window end (local)",
+                  "NWS reports", "Coastal flood reports", "Nearest report (km)", "News likely", "News possible",
+                  "News total", "Searched place", "Checked at (UTC)", "Final"])
+    for e in events:
+        ev_ws.append(e[:-1])
+        if e[-1]:
+            ev_ws.cell(ev_ws.max_row, 1).hyperlink = e[-1]
+            ev_ws.cell(ev_ws.max_row, 1).font = blue
+    for i, wdt in enumerate([22, 30, 7, 11, 20, 20, 9, 12, 12, 9, 10, 9, 30, 21, 6], 1):
+        ev_ws.column_dimensions[ev_ws.cell(1, i).column_letter].width = wdt
+    for c in ev_ws[1]:
+        c.font = Font(bold=True)
+    ev_ws.freeze_panes = "A2"
+    ev_ws.auto_filter.ref = ev_ws.dimensions
+
+    # ── Progress ──
+    pr = wb.create_sheet("Progress")
+    pr.column_dimensions["A"].width = 34
+    a = ws.cell(1, FCOL["answer"]).column_letter
+    s = ws.cell(1, FCOL["source"]).column_letter
+    rng, src = f"'All reports'!${a}$2:${a}${last}", f"'All reports'!${s}$2:${s}${last}"
+    pr.append(["Review progress", "NWS storm report", "News article"])
+    for label, crit in (("Rows", None), ("Yes", "Yes"), ("No", "No"), ("NaN", "NaN"), ("Invalid", "Invalid")):
+        f = (lambda kind: f'=COUNTIF({src},"{kind}")') if crit is None else \
+            (lambda kind, crit=crit: f'=COUNTIFS({src},"{kind}",{rng},"{crit}")')
+        pr.append([label, f("NWS storm report"), f("News article")])
+    pr.append(["Not answered yet", "=B2-SUM(B3:B6)", "=C2-SUM(C3:C6)"])
+    for c in pr[1]:
+        c.font = Font(bold=True)
+
+    wb.active = wb.sheetnames.index("All reports")
+    wb.calculation.fullCalcOnLoad = True
+    with tempfile.TemporaryDirectory() as tmp:             # build outside Box, check, then replace
+        new = Path(tmp) / out.name
+        wb.save(new)
+        now = flood_answers(new)
+        lost = [k for k, v in old.items() if (now.get(k) or {}).get("answer") != v.get("answer")
+                or (now.get(k) or {}).get("notes") != v.get("notes")]
+        if lost:
+            print(f"{out.name} not updated: {len(lost)} earlier answer(s) would change, e.g. {lost[0]}")
+            return
+        if out.exists() and old:
+            FLOOD_BACKUPS.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(out, FLOOD_BACKUPS / f"{out.stem}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.xlsx")
+            for b in sorted(FLOOD_BACKUPS.glob(f"{out.stem}_*.xlsx"))[:-300]:
+                b.unlink()
+        shutil.copyfile(new, out)
     n_rep = sum(len(d.get("reports") or []) for d in lsr.values())
     n_art = sum(d.get("n_likely", 0) + d.get("n_possible", 0) for d in news.values())
-    print(f"{out.name}: {n_rep} NWS reports, {n_art} likely/possible articles, {len(set(lsr) | set(news))} events")
+    print(f"{out.name}: {n_rep} NWS reports, {n_art} likely/possible articles, {len(events)} events; "
+          f"{len(old)} earlier answer(s) kept")
 
 
 def parse_iso(s):
