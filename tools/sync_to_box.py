@@ -362,6 +362,8 @@ def news_page(lsr, news, folder_name):
 
 
 def write_news_workbook(news_dest, lsr, news, names):
+    """HTF_flood_reports.xlsx: sheet "All reports" has one row per NWS report and per news
+    article (column B "Source" tells which); sheet "Events" has one row per event checked."""
     out = news_dest / WORKBOOK
     if (news_dest / f"~${out.name}").exists():
         print(f"{out.name} is open in Excel; not updated")
@@ -370,22 +372,24 @@ def write_news_workbook(news_dest, lsr, news, names):
     from openpyxl.styles import Font
     wb = Workbook()
     ws = wb.active
-    ws.title = "NWS reports"
-    ws.append(["Event folder", "Source", "HTF id", "Window start (local)", "Window end (local)", "Report time (local)",
-               "Hours from window", "Distance (km)", "Type", "Magnitude", "Unit", "City", "State", "NWS office",
-               "Reported by", "Remark", "NWS product", "Final"])
-    nw = wb.create_sheet("News")
-    nw.append(["Event folder", "Source", "HTF id", "Window start (local)", "Label", "Score", "Headline", "Source",
-               "Published (local)", "Hours from window start", "Why", "Link", "Searched place", "Final"])
+    ws.title = "All reports"
+    ws.append(["Event folder", "Source", "HTF id", "Window start (local)", "Window end (local)", "Time (local)",
+               "Hours from window", "News label", "News score", "NWS report type", "Text (NWS remark or news headline)",
+               "Place", "Reported by / outlet", "Distance (km)", "Why this news label", "Link", "Final"])
     ev_ws = wb.create_sheet("Events")
-    ev_ws.append(["Event folder", "Evidence found", "HTF id", "Kind", "Window start (local)", "Window end (local)", "NWS reports",
-                  "Coastal flood reports", "Nearest report (km)", "News likely", "News possible", "News total",
-                  "Searched place", "Checked at (UTC)", "Final"])
+    ev_ws.append(["Event folder", "Evidence found", "HTF id", "Kind", "Window start (local)", "Window end (local)",
+                  "NWS reports", "Coastal flood reports", "Nearest report (km)", "News likely", "News possible",
+                  "News total", "Searched place", "Checked at (UTC)", "Final"])
 
     def page_link(cell, eid, has):
         rel = names.get(eid)
         if rel and has:
             cell.hyperlink = (rel / PAGE).as_posix()
+
+    def link(url):
+        if url:
+            ws.cell(ws.max_row, 16).hyperlink = url
+            ws.cell(ws.max_row, 11).hyperlink = url
 
     for eid in sorted(set(lsr) | set(news)):
         L_, N_ = lsr.get(eid) or {}, news.get(eid) or {}
@@ -396,22 +400,24 @@ def write_news_workbook(news_dest, lsr, news, names):
         has = bool(reports) or any(a["label"] != "unlikely" for a in arts)
         p = N_.get("place") or {}
         where = ", ".join(x for x in (p.get("place"), p.get("county"), p.get("state")) if x)
+        w0, w1 = (parse_iso(w[k]) if w.get(k) else None for k in ("start", "end"))
         for r in reports:
-            ws.append([name, "NWS storm report", base["htf_id"], w.get("start_local"), w.get("end_local"), r.get("time_local") or r["time"],
-                       r["hours_from_window"], r["distance_km"], r["type"], r.get("magnitude"), r.get("unit"),
-                       r.get("city"), r.get("state"), r.get("wfo"), r.get("source"), r.get("remark"),
-                       r.get("product_url"), L_.get("final")])
-            if r.get("product_url"):
-                ws.cell(ws.max_row, 17).hyperlink = r["product_url"]
+            ws.append([name, "NWS storm report", base["htf_id"], w.get("start_local"), w.get("end_local"),
+                       r.get("time_local") or r["time"], r["hours_from_window"], None, None, r["type"],
+                       r.get("remark"), ", ".join(x for x in (r.get("city"), r.get("state")) if x), r.get("source"),
+                       r["distance_km"], None, r.get("product_url"), L_.get("final")])
+            link(r.get("product_url"))
             page_link(ws.cell(ws.max_row, 1), eid, has)
         for a in arts:
-            nw.append([name, "News article", base["htf_id"], w.get("start_local"), a["label"], a["score"], a["title"], a.get("source"),
-                       a.get("published_local") or a.get("published"), a.get("hours_from_window_start"),
-                       ", ".join(a["reasons"]), a.get("url"), where, N_.get("final")])
-            if a.get("url"):
-                nw.cell(nw.max_row, 7).hyperlink = a["url"]
-                nw.cell(nw.max_row, 12).hyperlink = a["url"]
-            page_link(nw.cell(nw.max_row, 1), eid, has)
+            t = parse_iso(a["published"]) if a.get("published") else None
+            h = None
+            if t and w0 and w1:
+                h = 0.0 if w0 <= t <= w1 else round(((t - w0) if t < w0 else (t - w1)).total_seconds() / 3600, 1)
+            ws.append([name, "News article", base["htf_id"], w.get("start_local"), w.get("end_local"),
+                       a.get("published_local") or a.get("published"), h, a["label"], a["score"], None, a["title"],
+                       where, a.get("source"), None, ", ".join(a["reasons"]), a.get("url"), N_.get("final")])
+            link(a.get("url"))
+            page_link(ws.cell(ws.max_row, 1), eid, has)
         n_news = (N_.get("n_likely") or 0) + (N_.get("n_possible") or 0)
         evidence = " + ".join(x for x, ok in (("NWS storm report", reports), ("News article", n_news)) if ok) or "None"
         ev_ws.append([name, evidence, base["htf_id"], base.get("kind"), w.get("start_local"), w.get("end_local"),
@@ -420,8 +426,7 @@ def write_news_workbook(news_dest, lsr, news, names):
                       N_.get("n_likely"), N_.get("n_possible"), N_.get("n_articles"), where,
                       max(x["checked_at"] for x in (L_, N_) if x), all(x.get("final") for x in (L_, N_) if x)])
         page_link(ev_ws.cell(ev_ws.max_row, 1), eid, has)
-    for sheet, widths in ((ws, [24, 18, 8, 26, 26, 26, 10, 10, 15, 10, 8, 20, 6, 8, 18, 80, 30, 7]),
-                          (nw, [24, 14, 8, 26, 9, 7, 80, 22, 26, 10, 40, 30, 30, 7]),
+    for sheet, widths in ((ws, [24, 18, 8, 26, 26, 26, 10, 10, 8, 15, 80, 28, 22, 10, 40, 30, 7]),
                           (ev_ws, [24, 30, 8, 11, 26, 26, 9, 12, 12, 9, 10, 9, 30, 21, 7])):
         for i, wdt in enumerate(widths, 1):
             sheet.column_dimensions[sheet.cell(1, i).column_letter].width = wdt
@@ -435,6 +440,11 @@ def write_news_workbook(news_dest, lsr, news, names):
     n_rep = sum(len(d.get("reports") or []) for d in lsr.values())
     n_art = sum(d.get("n_likely", 0) + d.get("n_possible", 0) for d in news.values())
     print(f"{out.name}: {n_rep} NWS reports, {n_art} likely/possible articles, {len(set(lsr) | set(news))} events")
+
+
+def parse_iso(s):
+    from datetime import datetime, timezone
+    return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
 
 
 def main():
