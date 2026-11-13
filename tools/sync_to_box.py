@@ -213,7 +213,7 @@ def publish_news(news_mirror, news_dest, capture_mirror):
         print("No storm-report or news files yet")
         return
     lsr = {eid: json.loads(p.read_text()) for eid, p in lsr_files.items()}
-    news = {eid: json.loads(p.read_text()) for eid, p in news_files.items()}
+    news = {eid: drop_outside_dates(json.loads(p.read_text())) for eid, p in news_files.items()}
     # Name folders over all events of each day, so names match the captures folders.
     all_ids = {ev.name: ev.parent.name for ev in (p.parent for p in capture_mirror.glob("*/*/event.json"))}
     for files in (lsr_files, news_files):
@@ -244,6 +244,22 @@ def publish_news(news_mirror, news_dest, capture_mirror):
     write_news_workbook(news_dest, lsr, news, {e: p.relative_to(news_dest) for e, p in box_dirs.items()})
 
 
+def drop_outside_dates(news):
+    """news.json with only the articles published within its search dates (UTC days, inclusive).
+
+    Google News sometimes ignores after:/before: and returns unrelated items from months away;
+    news.json files written before crossval/news.py filtered them still contain those."""
+    s = news.get("search") or {}
+    if not s.get("published_from") or not s.get("published_before"):
+        return news
+    lo, hi = s["published_from"], s["published_before"]
+    keep = [a for a in news.get("articles") or []
+            if not a.get("published") or lo <= parse_iso(a["published"]).date().isoformat() <= hi]
+    return dict(news, articles=keep, n_articles=len(keep),
+                n_likely=sum(a["label"] == "likely" for a in keep),
+                n_possible=sum(a["label"] == "possible" for a in keep))
+
+
 def news_page(lsr, news, folder_name):
     """Flood_reports.html: a plain report page with a map of the HTF point and the NWS
     reports, a table of the NWS reports (links to the NWS text and Google Maps), and a
@@ -263,6 +279,8 @@ def news_page(lsr, news, folder_name):
     articles = (news or {}).get("articles") or []
     w = base.get("window", {})
     radius = ((lsr or {}).get("search") or {}).get("radius_km", 20)
+    np_ = (news or {}).get("place") or {}
+    news_where = " or ".join(x for x in (np_.get("place"), np_.get("county")) if x)
     final = all(x.get("final") for x in (lsr, news) if x)
     checked = max(x["checked_at"] for x in (lsr, news) if x)
 
@@ -325,7 +343,8 @@ def news_page(lsr, news, folder_name):
  h2 {{ font-size:19px; font-weight:600; margin:30px 0 8px; padding-bottom:4px; border-bottom:1px solid #999; }}
  dl {{ display:grid; grid-template-columns:max-content 1fr; gap:2px 16px; margin:0 0 14px; font-size:15px; }}
  dt {{ color:#555; }} dd {{ margin:0; }}
- #map {{ height:340px; border:1px solid #999; }}
+ #map {{ height:400px; border:1px solid #999; }}
+ .rl {{ font-size:12px; font-weight:600; color:#1f6fd1; text-align:center; white-space:nowrap; text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }}
  .cap, .note {{ font-size:14px; color:#565c65; margin:6px 0 10px; }}
  table {{ border-collapse:collapse; width:100%; font-size:15px; line-height:1.45; font-variant-numeric:tabular-nums; }}
  th, td {{ border:1px solid #ccc; padding:6px 8px; vertical-align:top; text-align:left; }}
@@ -347,7 +366,7 @@ def news_page(lsr, news, folder_name):
  <dt>Last checked</dt><dd>{short(checked)} UTC{'' if final else ' (not final; more may be added)'}</dd>
 </dl>
 <div id="map"></div>
-<p class=cap>Red dot: HTF point. Circle: {radius:g} km NWS search radius. Numbered boxes: NWS reports in the table below.</p>
+<p class=cap>Red dot: HTF point. Blue circle: NWS search area, {radius:g} km around the HTF point; only storm reports inside it are kept. Numbered boxes: NWS reports in the table below. News articles have no circle: they are found by place name ({esc(news_where) or 'town or county'}), not by distance.</p>
 <h2>NWS Local Storm Reports</h2>
 {nws_html}
 <h2>News articles</h2>
@@ -364,13 +383,17 @@ def news_page(lsr, news, folder_name):
  const sat = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'}});
  L.control.layers({{'Streets': street, 'Satellite': sat}}).addTo(map);
  L.control.scale({{imperial: false}}).addTo(map);
- L.circle(htf, {{radius: {radius} * 1000, color: '#333', weight: 1, dashArray: '4 4', fill: false}}).addTo(map);
+ map.setView(htf, 10);
+ const area = L.circle(htf, {{radius: {radius} * 1000, color: '#1f6fd1', weight: 2, dashArray: '6 4', fillColor: '#1f6fd1', fillOpacity: 0.06}}).addTo(map)
+   .bindTooltip('NWS search area: {radius:g} km', {{sticky: true}});
+ // Label on the circle's northern edge.
+ L.marker([htf[0] + {radius} / 111.32, htf[1]], {{interactive: false, icon: L.divIcon({{className: '', html: '<div class="rl">{radius:g} km NWS search radius</div>', iconSize: [170, 18], iconAnchor: [85, 20]}})}}).addTo(map);
  L.circleMarker(htf, {{radius: 6, color: '#000', weight: 1, fillColor: '#d00', fillOpacity: 1}}).addTo(map).bindTooltip('HTF {base['htf_id']}');
- const b = [htf];
- pts.forEach(p => {{ b.push([p.lat, p.lon]);
+ const b = L.latLngBounds(area.getBounds());
+ pts.forEach(p => {{ b.extend([p.lat, p.lon]);
    L.marker([p.lat, p.lon], {{icon: L.divIcon({{className: '', html: '<div class="mk">' + p.n + '</div>', iconSize: [20, 20], iconAnchor: [10, 10]}})}}).addTo(map); }});
- const fit = () => {{ map.invalidateSize(); if (pts.length) map.fitBounds(L.latLngBounds(b).pad(0.15), {{maxZoom: 13}}); else map.setView(htf, 11); }};
- map.setView(htf, 11); fit();
+ const fit = () => {{ map.invalidateSize(); map.fitBounds(b.pad(0.05)); }};
+ fit();
  window.addEventListener('load', fit); window.addEventListener('resize', fit);
 </script>
 </body></html>

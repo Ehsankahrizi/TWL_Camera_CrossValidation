@@ -138,8 +138,16 @@ def main():
     print(f"LSR check: {n} events checked, {hits} with flood reports nearby")
 
 
-def backfill_all(check_fn=None, label="Backfill"):
-    """One-off: run check_fn (default: the LSR check) on every event.json in S3, a day at a time."""
+def recheck_recent():
+    """Weekly: re-check every event of the last REPORT_RECHECK_DAYS days, also the ones already
+    final, so reports that NWS adds days or weeks late still reach lsr.json (and the workbook)."""
+    since = (utcnow() - timedelta(days=config.REPORT_RECHECK_DAYS)).date().isoformat()
+    backfill_all(label=f"Weekly re-check since {since}", since=since)
+
+
+def backfill_all(check_fn=None, label="Backfill", since=None):
+    """Run check_fn (default: the LSR check) on every event.json in S3 (or only those of
+    event dates >= since, "YYYY-MM-DD"), a day at a time."""
     check_fn = check_fn or check
     from . import store, util
     if not config.S3_BUCKET:
@@ -149,7 +157,8 @@ def backfill_all(check_fn=None, label="Backfill"):
             for o in page.get("Contents", []) if o["Key"].endswith("/event.json")]
     by_date = {}
     for k in keys:
-        by_date.setdefault(k.split("/")[1], []).append(k)
+        if since is None or k.split("/")[1] >= since:
+            by_date.setdefault(k.split("/")[1], []).append(k)
     now, total, hits = utcnow(), 0, 0
     for date in sorted(by_date):
         events = []
@@ -166,7 +175,11 @@ def backfill_all(check_fn=None, label="Backfill"):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true", help="check every event in S3 (backfill)")
-    if ap.parse_args().all:
+    ap.add_argument("--recent", action="store_true", help=f"check events of the last {config.REPORT_RECHECK_DAYS} days (the weekly re-check)")
+    a = ap.parse_args()
+    if a.all:
         backfill_all()
+    elif a.recent:
+        recheck_recent()
     else:
         main()

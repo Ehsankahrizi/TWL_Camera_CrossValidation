@@ -35,6 +35,8 @@ REPORT_RADIUS_KM = 20.0                 # LSRs are geocoded to towns, so wider t
 REPORT_BEFORE_H = 3                     # search from 3 h before the window ...
 REPORT_AFTER_H = 6                      # ... to 6 h after it
 REPORT_FINAL_AFTER_H = 42               # re-check until then: LSRs can be issued late
+REPORT_RECHECK_DAYS = 30                # weekly, re-check every event from the last 30 days ...
+REPORT_RECHECK_SLOT = (6, 7, 50)        # ... on Sunday (weekday 6) after the 07:50 UTC planning cycle
 
 # ── Images ──
 IMAGE_MAX_WIDTH = 1920                  # full HD kept as is; larger frames are downsized

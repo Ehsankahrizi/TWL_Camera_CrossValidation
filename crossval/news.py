@@ -160,10 +160,15 @@ def check_event(ev, now):
         for a in items:
             articles.setdefault(a["title"].lower(), a)
     tz = ev.get("time_zone")
-    out = []
+    out, n_outside = [], 0
     for a in articles.values():
         s, why = score(a["title"], p)
         pub = parse_time(a["published"]) if a["published"] else None
+        if pub and not start <= pub.date() <= end:
+            # Google News sometimes ignores after:/before: and returns months-old or newer
+            # items from the area; keep only what was published in the searched dates.
+            n_outside += 1
+            continue
         out.append({**a,
                     "published_local": local_iso(pub, tz) if pub else None,
                     "hours_from_window_start": round((pub - w0).total_seconds() / 3600, 1) if pub else None,
@@ -175,7 +180,8 @@ def check_event(ev, now):
         "lat": ev["lat"], "lon": ev["lon"], "time_zone": tz, "place": p,
         "window": {k: ev["window"][k] for k in ("start", "end", "start_local", "end_local") if k in ev["window"]},
         "search": {"source": "Google News RSS", "queries": queries, "published_from": str(start),
-                   "published_before": str(end), "scoring": "keywords in the headline; see crossval/news.py"},
+                   "published_before": str(end), "scoring": "keywords in the headline; see crossval/news.py",
+                   "n_dropped_outside_dates": n_outside},
         "checked_at": iso(now),
         "final": now >= w1 + timedelta(hours=config.REPORT_FINAL_AFTER_H),
         "n_articles": len(out),

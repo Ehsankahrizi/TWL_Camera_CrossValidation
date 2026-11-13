@@ -3,6 +3,8 @@
 Runs a capture cycle at :00, :15, :30 and :45 past every hour, and a planning cycle
 at 01:50, 07:50, 13:50 and 19:50 UTC (20 min after each coastal-twl-app forecast run),
 followed by the NWS storm-report and news checks (crossval/reports.py, crossval/news.py).
+Every Sunday after the 07:50 planning cycle, the storm reports of the last 30 days are
+re-checked, so reports NWS adds late still reach the workbook.
 Each cycle pulls the state from S3, runs, and pushes what changed. A failing cycle is
 logged and the loop continues; if the process dies, ECS restarts the container.
 
@@ -55,6 +57,8 @@ def main():
             run_cycle("plan", plan.main)
             run_cycle("reports", reports.main)
             run_cycle("news", news.main)
+            if (slot.weekday(), slot.hour, slot.minute) == config.REPORT_RECHECK_SLOT:
+                run_cycle("weekly report re-check", reports.recheck_recent)
         if slot.minute % CAPTURE_EVERY_MIN == 0:
             run_cycle("capture", capture.main)
 
