@@ -69,7 +69,7 @@ A second, independent check of the forecast. When an NWS office learns of floodi
 
 `crossval/reports.py` runs after every planning cycle. For each event in the schedule it keeps the flood reports (`COASTAL FLOOD`, `FLOOD`, `FLASH FLOOD`) within 20 km of the HTF point, from 3 h before the window to 6 h after it, and writes them to `news/<date>/<event_id>/lsr.json`. Each report has its time (UTC and local), hours from the window (negative before, 0 inside, positive after), distance, type, place, who reported it, the remark and a link to the NWS product.
 
-- **Late reports:** LSRs are sometimes issued hours or a day late, so each event is re-checked until 42 h after its window. `final: true` marks the last check. An empty list is only meaningful once `final` is true.
+- **Late reports:** LSRs are sometimes issued hours or a day late, so each event is re-checked until 42 h after its window. `final: true` marks the end of these regular checks. An empty list is only meaningful once `final` is true. On top of that, every Sunday after the 07:50 UTC planning cycle the runner re-checks all events of the last 30 days (also final ones), so reports that NWS adds days or weeks late still reach `lsr.json` and the workbook. Run it by hand with `python -m crossval.reports --recent`.
 - **Radius:** LSRs are placed at a town or a "2 S Miami Beach"-style offset, not the exact street, so the radius is wider than the camera radius. Use `distance_km` and `hours_from_window` to apply a stricter match.
 - **No report ≠ no flood:** most minor tidal flooding is never reported. LSRs can confirm a flood but cannot prove there was none. In a backtest of 605 events (24 Sep – 9 Nov 2026), 72 had at least one report within 20 km.
 - **Backfill:** `S3_BUCKET=bil6-twl-camera-crossval-858933856877 STATE_DIR=/tmp/twl-state python -m crossval.reports --all` checks every event already in S3.
@@ -427,7 +427,7 @@ All tunable values are in `crossval/config.py`:
 | Control events per forecast run | 0 (off; env `CONTROL_MAX_PER_RUN`) |
 | Image width | ≤ 1920 px |
 | Storm-report radius | 20 km |
-| Storm-report time span | window −3 h … +6 h, re-checked until +42 h |
+| Storm-report time span | window −3 h … +6 h, re-checked until +42 h, then weekly (Sunday) for 30 days |
 
 ## Limitations
 
