@@ -213,7 +213,7 @@ def publish_news(news_mirror, news_dest, capture_mirror):
         print("No storm-report or news files yet")
         return
     lsr = {eid: json.loads(p.read_text()) for eid, p in lsr_files.items()}
-    news = {eid: json.loads(p.read_text()) for eid, p in news_files.items()}
+    news = {eid: drop_outside_dates(json.loads(p.read_text())) for eid, p in news_files.items()}
     # Name folders over all events of each day, so names match the captures folders.
     all_ids = {ev.name: ev.parent.name for ev in (p.parent for p in capture_mirror.glob("*/*/event.json"))}
     for files in (lsr_files, news_files):
@@ -242,6 +242,22 @@ def publish_news(news_mirror, news_dest, capture_mirror):
     (news_dest / OLD_FILES[1]).unlink(missing_ok=True)
     print(f"{copied} flood-evidence file(s) copied into {news_dest}")
     write_news_workbook(news_dest, lsr, news, {e: p.relative_to(news_dest) for e, p in box_dirs.items()})
+
+
+def drop_outside_dates(news):
+    """news.json with only the articles published within its search dates (UTC days, inclusive).
+
+    Google News sometimes ignores after:/before: and returns unrelated items from months away;
+    news.json files written before crossval/news.py filtered them still contain those."""
+    s = news.get("search") or {}
+    if not s.get("published_from") or not s.get("published_before"):
+        return news
+    lo, hi = s["published_from"], s["published_before"]
+    keep = [a for a in news.get("articles") or []
+            if not a.get("published") or lo <= parse_iso(a["published"]).date().isoformat() <= hi]
+    return dict(news, articles=keep, n_articles=len(keep),
+                n_likely=sum(a["label"] == "likely" for a in keep),
+                n_possible=sum(a["label"] == "possible" for a in keep))
 
 
 def news_page(lsr, news, folder_name):
