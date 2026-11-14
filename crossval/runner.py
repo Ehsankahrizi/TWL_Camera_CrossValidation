@@ -1,6 +1,6 @@
 """Always-on scheduler for the ECS service (no EventBridge needed).
 
-Runs a capture cycle at :00, :15, :30 and :45 past every hour, and a planning cycle
+Runs a capture cycle at :00 and :30 past every hour (config.LIVE_CAPTURE_INTERVAL_MIN), and a planning cycle
 at 01:50, 07:50, 13:50 and 19:50 UTC (20 min after each coastal-twl-app forecast run),
 followed by the NWS storm-report and news checks (crossval/reports.py, crossval/news.py).
 Every Sunday after the 07:50 planning cycle, the storm reports of the last 30 days are
@@ -36,7 +36,7 @@ def run_cycle(name, fn):
 
 
 def next_slot(now):
-    """Next whole quarter hour (or planning time) after now."""
+    """Next capture slot (every LIVE_CAPTURE_INTERVAL_MIN, on the hour) or planning time after now."""
     t = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
     while not (t.minute % CAPTURE_EVERY_MIN == 0 or (t.hour, t.minute) in PLAN_TIMES):
         t += timedelta(minutes=1)

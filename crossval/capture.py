@@ -1,6 +1,6 @@
 """Capture camera frames for planned events.
 
-Live capture (runs every 15 min): for events whose capture window contains "now",
+Live capture (runs every 30 min, config.LIVE_CAPTURE_INTERVAL_MIN): for events whose capture window contains "now",
 grab one frame from each live-only camera (traffic, Windy). For traffic cameras
 with an HLS stream, a frame is pulled from the video with ffmpeg (truly current);
 otherwise, or if that fails, the agency snapshot image is saved.
@@ -15,6 +15,12 @@ Timing: each frame records both when it was fetched ("time") and when the camera
 took the image ("image_time", with "image_time_basis" saying how that is known),
 plus its age at capture and a "stale" flag (older than STALE_AFTER_MIN). A frame
 identical to the camera's previous one (a frozen camera) is not saved again.
+
+Missed slots: whenever a live camera gives no new frame, event.json "missed" records
+when and why, so a gap in the frames can be explained later and map.png can show it:
+  offline   the agency served its "camera offline" image (config.PLACEHOLDER_SHA1)
+  no_image  the camera returned nothing usable (HTTP error, timeout, not an image)
+  frozen    the same image as the camera's previous frame
 
 Usage:  python -m crossval.capture
 """
@@ -48,14 +54,14 @@ def frame_path(ev, cam, t):
 
 
 def ensure_map(ev, cam, rel):
-    """(Re)draw map.png in the camera's folder after each new frame, so the forecast
-    chart shows every image time and the latest forecast run."""
+    """(Re)draw map.png in the camera's folder after each new frame or missed slot, so
+    the forecast chart shows every image time, every gap and the latest forecast run."""
     from . import maps
     from . import util
     out = config.CAPTURE_DIR / Path(rel).parent / "map.png"
     times = [parse_time(c.get("image_time") or c["time"]) for c in ev["captures"] if c["camera_id"] == cam["id"]]
     try:
-        if maps.render(ev, cam, out, times):
+        if maps.render(ev, cam, out, times, maps.missed_times(ev, cam["id"])):
             util.WRITTEN.add(out)
             cam["map_file"] = str(Path(rel).parent / "map.png")
     except Exception as e:                       # a map must never stop the capture
@@ -82,6 +88,12 @@ def record(ev, cam, t, rel, method, size, image_time, basis, digest):
         "stale": age is not None and age > config.STALE_AFTER_MIN,
         "sha1": digest,
         "file": str(rel), "artifact": ARTIFACT, "size": list(size)})
+
+
+def note_missed(ev, cam, t, reason):
+    """Record a live slot in which this camera gave no new frame (see module docstring)."""
+    ev.setdefault("missed", []).append({"source": cam["source"], "camera_id": cam["id"], "time": iso(t),
+                                        "time_local": local_iso(t, ev.get("time_zone")), "reason": reason})
 
 
 def fetch(url, timeout=25):
@@ -114,7 +126,8 @@ def hls_frame(url):
 # ── Live ──────────────────────────────────────────────────────────────────────
 
 def capture_live(ev, now):
-    got = 0
+    """Grab one frame per live camera. Returns (frames saved, missed slots recorded)."""
+    got = missed = 0
     min_gap = timedelta(minutes=config.LIVE_CAPTURE_INTERVAL_MIN - 5)
     for cam in ev["cameras"]:
         if cam["archive"]:
@@ -144,21 +157,37 @@ def capture_live(ev, now):
                 data, method = fetch_bytes(url), "windy_current"
                 image_time = parse_time(updated) if updated else None
                 basis = "windy_last_updated" if image_time else "unknown"
+        elif cam["source"] == "windy":
+            continue                                     # Windy images not stored: nothing missed
+        reason = None
         if not data:
-            continue
-        if image_time and image_time > now:              # server clocks a few seconds fast
-            image_time = now
-        digest = hashlib.sha1(data).hexdigest()
-        if mine and mine[-1].get("sha1") == digest:
-            print(f"    = {cam['source']} {cam['id']}: same image as last time (frozen camera), not saved")
-            continue
-        rel = frame_path(ev, cam, now)
-        size = save_image(data, config.CAPTURE_DIR / rel)
-        if size:
-            record(ev, cam, now, rel, method, size, image_time, basis, digest)
-            ensure_map(ev, cam, rel)
-            got += 1
-    return got
+            reason = "no_image"
+            print(f"    ! {cam['source']} {cam['id']}: no image")
+        else:
+            if image_time and image_time > now:          # server clocks a few seconds fast
+                image_time = now
+            digest = hashlib.sha1(data).hexdigest()
+            if digest in config.PLACEHOLDER_SHA1:
+                reason = "offline"
+                print(f"    ! {cam['source']} {cam['id']}: camera offline ({config.PLACEHOLDER_SHA1[digest]}), not saved")
+            elif mine and mine[-1].get("sha1") == digest:
+                reason = "frozen"
+                print(f"    = {cam['source']} {cam['id']}: same image as last time (frozen camera), not saved")
+            else:
+                rel = frame_path(ev, cam, now)
+                size = save_image(data, config.CAPTURE_DIR / rel)
+                if size:
+                    record(ev, cam, now, rel, method, size, image_time, basis, digest)
+                    ensure_map(ev, cam, rel)
+                    got += 1
+                else:
+                    reason = "no_image"
+        if reason:
+            note_missed(ev, cam, now, reason)
+            missed += 1
+            if mine:                                     # redraw so the chart shows the gap
+                ensure_map(ev, cam, mine[-1]["file"])
+    return got, missed
 
 
 # ── Archive backfill ────────────────────────────────────────────────────────
@@ -250,10 +279,10 @@ def main():
         if not ev["state"]["live_done"]:
             if s - timedelta(minutes=5) <= now <= e + timedelta(minutes=5):
                 active += 1
-                n = capture_live(ev, now)
+                n, missed = capture_live(ev, now)
                 live_total += n
-                changed |= n > 0
-                print(f"  live  {ev['event_id']}: +{n} frames")
+                changed |= n > 0 or missed > 0
+                print(f"  live  {ev['event_id']}: +{n} frames" + (f", {missed} cameras without a new frame" if missed else ""))
             elif now > e + timedelta(minutes=5):
                 ev["state"]["live_done"] = True
                 changed = True

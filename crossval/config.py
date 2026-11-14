@@ -19,10 +19,10 @@ MAX_WINDY_CAMERAS = 3
 # Forecasts are hourly. An event's window runs from the first to the last hour at or
 # above the threshold, padded on both sides so the rise and fall are recorded too.
 WINDOW_PAD_MIN = 30
-LIVE_CAPTURE_INTERVAL_MIN = 15          # capture workflow cadence (cron */15)
+LIVE_CAPTURE_INTERVAL_MIN = 30          # live capture cadence: :00 and :30 (was 15 until 2026-11-14)
 STALE_AFTER_MIN = 30                    # a live frame whose image is older than this is flagged stale
 BACKFILL_DELAY_MIN = 60                 # wait this long after a window closes before pulling archives
-ARCHIVE_FRAME_STEP_MIN = 15             # keep at most one archived frame per this many minutes
+ARCHIVE_FRAME_STEP_MIN = 30             # keep at most one archived frame per this many minutes
 
 # ── Control cases (forecast BELOW threshold) ──
 # Off by default: only forecast exceedance periods are captured. Set to e.g. 15 to also
@@ -37,6 +37,14 @@ REPORT_AFTER_H = 6                      # ... to 6 h after it
 REPORT_FINAL_AFTER_H = 42               # re-check until then: LSRs can be issued late
 REPORT_RECHECK_DAYS = 30                # weekly, re-check every event from the last 30 days ...
 REPORT_RECHECK_SLOT = (6, 7, 50)        # ... on Sunday (weekday 6) after the 07:50 UTC planning cycle
+
+# ── Offline cameras ──
+# Exact bytes (SHA-1) that agencies serve instead of a photo while a camera is down.
+# Such an image is not saved as a frame; event.json records the camera as offline.
+PLACEHOLDER_SHA1 = {
+    "7063c3929559b480e4c4874b8064082603994c69": "No live camera feed at this time (NC, FL; 540x330)",
+    "d8020ca8328c749a9779a2f6d119db1660dca565": "STREAM NOT AVAILABLE (VA; 1920x1080)",
+}
 
 # ── Images ──
 IMAGE_MAX_WIDTH = 1920                  # full HD kept as is; larger frames are downsized

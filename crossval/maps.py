@@ -4,7 +4,8 @@ Top panel: the HTF point, the camera-search radius, the camera, a line between t
 with the distance, a legend, a scale bar and a north arrow, on an Esri street basemap
 (Pillow, web-mercator tiles). Bottom panel (same width, wide and short): the mean NWM TWL forecast for the HTF point
 (ft above MHHW) with the threshold, the part above it shaded as in the iOS app, the
-HTF period, earlier forecast runs, and a marker at every image this camera captured.
+HTF period, earlier forecast runs, a marker at every image this camera captured, and
+a dashed line at every capture slot with no new image (camera offline / no image / unchanged).
 
 Usage (existing folders):  python -m crossval.maps --events "<folder with <date>/<event_id>/event.json>"
 """
@@ -140,8 +141,25 @@ CHART_STYLE = {
     "legend.fontsize": 12, "grid.linewidth": 0.6,
 }
 
-def chart(ev, cam, image_times, width, height):
-    """Bottom panel: forecast time series with threshold, HTF period and image times."""
+MISSED_STYLE = {   # reason → (legend text, why, line style); all drawn as dark slate lines
+    "offline": ("camera offline", "agency sent its 'no live feed' image", (0, (4, 3))),       # dashed
+    "no_image": ("camera did not respond", "HTTP error, timeout or not an image", (0, (1, 2))),  # dotted
+    "frozen": ("same picture as before", "frozen camera", (0, (6, 2, 1, 2))),                    # dash-dot
+}
+
+
+def missed_times(ev, camera_id):
+    """{reason: [datetimes]} of live slots in which this camera gave no new frame."""
+    out = {}
+    for m in ev.get("missed", []):
+        if m["camera_id"] == camera_id:
+            out.setdefault(m["reason"], []).append(datetime.fromisoformat(m["time"].replace("Z", "+00:00")))
+    return out
+
+
+def chart(ev, cam, image_times, width, height, missed=None):
+    """Bottom panel: forecast time series with threshold, HTF period, image times and
+    missed slots (missed: {reason: [datetimes]}, see missed_times)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.dates as mdates
@@ -194,8 +212,14 @@ def chart(ev, cam, image_times, width, height):
             ax.annotate(f"{len(times)} images: {fmt(times[0])}–{fmt(times[-1])}", (times[len(times) // 2], top),
                         xytext=(0, 10), textcoords="offset points", ha="center", fontsize=11, fontweight="bold",
                         color="#15803d", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#15803d", lw=1))
+    # Slots without an image: a dark slate line (unlike the light-grey earlier runs) where an image would have been, styled by reason
+    for reason, (title, why, ls) in MISSED_STYLE.items():
+        ts = sorted((missed or {}).get(reason, []))
+        for i, t in enumerate(ts):
+            ax.axvline(t, color="#334155", lw=1.0, ls=ls, alpha=0.8, zorder=1,
+                       label=f"No image: {title} (n = {len(ts)})" if i == 0 else None)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
-    zone = datetime.now(tz).strftime("%Z") if tz else "UTC"
+    zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
     ax.set_ylabel("TWL (ft above MHHW)")
     run = runs[-1].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
@@ -218,9 +242,10 @@ def chart(ev, cam, image_times, width, height):
     return img
 
 
-def render(ev, cam, out_path, image_times=None):
+def render(ev, cam, out_path, image_times=None, missed=None):
     """Draw map.png (map + forecast chart) for one camera of one event.
-    image_times: datetimes of this camera's images. Returns the path or None on failure."""
+    image_times: datetimes of this camera's images; missed: {reason: [datetimes]} of
+    slots without a new image. Returns the path or None on failure."""
     lat, lon, radius_km = ev["lat"], ev["lon"], config.CAMERA_RADIUS_KM
     z = max(10, min(15, math.floor(math.log2(156543.03392 * math.cos(math.radians(lat)) * RADIUS_PX / (radius_km * 1000)))))
     img, (x0, y0) = basemap(lat, lon, z)
@@ -252,7 +277,6 @@ def render(ev, cam, out_path, image_times=None):
     d.text((16, 42), sub, font=font(18), fill=(60, 60, 60))
 
     # legend
-    lx, ly = 16, 92
     items = [
         ("htf", f"HTF point {ev['htf_id']}  ({lat:.4f}, {lon:.4f})",
          f"threshold {ev['threshold_ft_mhhw']:.2f} ft ({ev['threshold_m_mhhw']:.3f} m) above MHHW"),
@@ -261,7 +285,18 @@ def render(ev, cam, out_path, image_times=None):
         ("line", f"Distance from HTF point to camera: {dist}", None),
     ]
     box_h = 22 + sum(52 if s else 34 for _, _, s in items)
-    d.rounded_rectangle([lx, ly, lx + 600, ly + box_h], 8, fill=(255, 255, 255, 242), outline=(120, 120, 120), width=2)
+    box_w = 54 + 20 + max(max(d.textlength(t, font=font(19, bold=True)), d.textlength(s or "", font=font(16)))
+                          for _, t, s in items)
+    # Put the legend in the corner where it hides the least: the HTF point, the camera
+    # and the distance label count most, the line between them a little.
+    keep = [(hp, 10), (cp, 10), (mid, 6)] + [((hp[0] + (cp[0] - hp[0]) * k / 12, hp[1] + (cp[1] - hp[1]) * k / 12), 1)
+                                             for k in range(1, 12)]
+    corners = [(16, 92), (W - 16 - box_w, 150),                 # top-left; top-right below the north arrow
+               (16, H - 30 - box_h), (W - 16 - box_w, H - 110 - box_h)]   # bottom-left; bottom-right above the scale bar
+    def hidden(c, m=14):
+        return sum(wt for (x, y), wt in keep if c[0] - m <= x <= c[0] + box_w + m and c[1] - m <= y <= c[1] + box_h + m)
+    lx, ly = min(corners, key=hidden)                           # ties: earlier corner wins
+    d.rounded_rectangle([lx, ly, lx + box_w, ly + box_h], 8, fill=(255, 255, 255, 242), outline=(120, 120, 120), width=2)
     y = ly + 14
     for kind, text, sub_text in items:
         sym = (lx + 26, y + 11)
@@ -297,7 +332,7 @@ def render(ev, cam, out_path, image_times=None):
     # attribution
     d.text((W - 10, H - 6), ATTRIBUTION, font=font(12), fill=(60, 60, 60), anchor="rd")
 
-    panel = chart(ev, cam, image_times or [], W, CHART_H)
+    panel = chart(ev, cam, image_times or [], W, CHART_H, missed)
     both = Image.new("RGB", (W, H + panel.height), "white")
     both.paste(img, (0, 0))
     both.paste(panel, (0, H))
@@ -326,7 +361,7 @@ def main():
                 continue
             times = {datetime.fromisoformat(re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00+00:00", f.stem))
                      for f in folder.glob("*.jpg")}
-            if render(ev, cam, out, sorted(times)):
+            if render(ev, cam, out, sorted(times), missed_times(ev, cam["id"])):
                 made += 1
     print(f"drew {made} maps")
 
