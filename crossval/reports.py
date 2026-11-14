@@ -25,7 +25,7 @@ import argparse
 from datetime import timedelta
 
 from . import config
-from .util import dist_km, http_json, iso, local_iso, parse_time, read_json, utcnow, write_json
+from .util import dist_km, event_date, http_json, iso, local_iso, parse_time, read_json, utcnow, write_json
 
 IEM_LSR = "https://mesonet.agron.iastate.edu/geojson/lsr.geojson"
 FLOOD_TYPES = {"COASTAL FLOOD", "FLOOD", "FLASH FLOOD"}
@@ -33,7 +33,7 @@ MAX_SPAN = timedelta(days=4)            # IEM returns at most 10,000 reports (al
 
 
 def report_path(ev):
-    return config.STATE_ROOT / "news" / ev["window"]["start"][:10] / ev["event_id"] / "lsr.json"
+    return config.STATE_ROOT / "news" / event_date(ev) / ev["event_id"] / "lsr.json"
 
 
 def search_span(ev):

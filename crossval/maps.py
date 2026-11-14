@@ -199,8 +199,12 @@ def chart(ev, cam, image_times, width, height, missed=None):
                         label="Forecast above threshold")
         ax.plot(t, v, color="#2563eb", lw=2.6, marker="o", ms=5,
                 label="Mean NWM TWL forecast (newest run at each hour)")
-    ax.axvspan(to_dt(w["start"]), to_dt(w["end"]) if w["end"] != w["start"] else to_dt(w["end"]) + (to_dt(w["end"]) - to_dt(w["start"])),
-               color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
+    # HTF period: the hours forecast at/above threshold. A one-hour period (start == end)
+    # is drawn ±30 min around that hour, or it would have no width.
+    p0, p1 = to_dt(w["start"]), to_dt(w["end"])
+    if p1 <= p0:
+        p0, p1 = p0 - timedelta(minutes=30), p1 + timedelta(minutes=30)
+    ax.axvspan(p0, p1, color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
     ax.axhline(thr, color="#9333ea", ls="--", lw=2.2, label=f"HTF threshold ({thr:.2f} ft)")
     # y range from every plotted value and the threshold (explicit, so nothing is clipped)
     vals = [p["v"] for f in runs for p in f["series_ft_mhhw"] if x0 <= to_dt(p["t"]) <= x1] + [thr]
