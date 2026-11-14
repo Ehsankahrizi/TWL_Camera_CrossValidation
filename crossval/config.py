@@ -38,6 +38,14 @@ REPORT_FINAL_AFTER_H = 42               # re-check until then: LSRs can be issue
 REPORT_RECHECK_DAYS = 30                # weekly, re-check every event from the last 30 days ...
 REPORT_RECHECK_SLOT = (6, 7, 50)        # ... on Sunday (weekday 6) after the 07:50 UTC planning cycle
 
+# ── Offline cameras ──
+# Exact bytes (SHA-1) that agencies serve instead of a photo while a camera is down.
+# Such an image is not saved as a frame; event.json records the camera as offline.
+PLACEHOLDER_SHA1 = {
+    "7063c3929559b480e4c4874b8064082603994c69": "No live camera feed at this time (NC, FL; 540x330)",
+    "d8020ca8328c749a9779a2f6d119db1660dca565": "STREAM NOT AVAILABLE (VA; 1920x1080)",
+}
+
 # ── Images ──
 IMAGE_MAX_WIDTH = 1920                  # full HD kept as is; larger frames are downsized
 JPEG_QUALITY = 85

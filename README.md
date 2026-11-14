@@ -23,7 +23,7 @@ flowchart TD
             P1["For each HTF point: hours with TWL ≥ threshold<br/>(runs < 3 h apart merged) → exceedance window"]
             P2["Optional (off by default): sample points forecast BELOW threshold<br/>→ control window at forecast peak"]
             P3["Find cameras ≤ 5 km:<br/>traffic (Road511 + ALGO AL) · USGS HIVIS · Windy · WebCOOS*"]
-            P4["Same point + overlapping window already planned?<br/>→ update it, add new cameras, keep each run's forecast"]
+            P4["Same point + overlapping window already planned?<br/>→ update it, add new cameras, keep each run's forecast,<br/>reopen capture if the end moved later"]
             P1 --> P3
             P2 --> P3 --> P4
         end
@@ -33,7 +33,7 @@ flowchart TD
         end
         subgraph CAP["② Capture — every 15 min (:00 :15 :30 :45)"]
             C1{"Window open now?"}
-            C2["Live cameras (traffic, Windy):<br/>video frame (ffmpeg) or snapshot, larger kept;<br/>record image time, age, stale, skip frozen"]
+            C2["Live cameras (traffic, Windy):<br/>video frame (ffmpeg) or snapshot, larger kept;<br/>record image time, age, stale;<br/>skip frozen and offline images, log missed slots"]
             C3{"Window closed ≥ 60 min ago?"}
             C4["Archive cameras (USGS, WebCOOS*):<br/>full-resolution frames recorded during the window"]
             C1 -- yes --> C2
@@ -174,6 +174,20 @@ A frame's *fetch* time and the time the camera *took* the image can differ. For 
 | `file`, `artifact`, `size` | Where the JPEG is and its pixel size |
 
 For traffic cameras, both the video frame and the agency snapshot are fetched, and the larger image is kept. USGS archive frames are full resolution.
+
+### Missed slots (`missed[]`) and offline cameras
+
+When a live camera gives no new frame in a 15-min slot, `missed[]` records it (`camera_id`, `time`, `time_local`, `reason`), and `map.png` marks it below the forecast chart:
+
+| `reason` | Meaning |
+|---|---|
+| `offline` | The agency served its "camera down" picture instead of a photo (DriveNC/Road511 "No live camera feed at this time", VDOT "STREAM NOT AVAILABLE"). These are matched by exact hash (`PLACEHOLDER_SHA1` in `crossval/config.py`) and are not saved as frames. Add a hash there when a new placeholder turns up. |
+| `no_image` | Nothing usable came back (HTTP error, timeout, not an image) |
+| `frozen` | Same image as the camera's previous frame |
+
+Traffic cameras keep no history, so frames missed while a camera was down cannot be recovered. Before 2026-11-14 the first placeholder of each outage was saved as a frame, and the slots after it were skipped without a record (123 frames in 80 events).
+
+**Extended windows:** a newer forecast often moves an event's end later. Since 2026-11-14 the planner restarts live capture (and the archive backfill) when that happens after capture had already finished. Before that fix such events stopped at the old end (42 events, ≈ 280 h lost, e.g. `20260925T08Z_HTF1176` stopped at 14:30 EDT although its window ran to 27 Sep).
 
 **Checked on 2026-09-25:**
 - **USGS:** file-name times match the time printed on the image (e.g. `23-12Z` ↔ "19:12:11 EDT").

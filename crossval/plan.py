@@ -110,6 +110,20 @@ def add_new_cameras(ev, entry):
     print(f"  ~ {ev['event_id']}: +{len(new)} new cameras ({', '.join(sorted({c['source'] for c in new}))})")
 
 
+def reopen(ev, old_end, now):
+    """A newer forecast moved the window's end later. If capture had already finished
+    (the old end had passed before this forecast arrived), start it again, or the rest
+    of the event is never recorded; archive frames are fetched again for the new end."""
+    new_end = parse_time(ev["window"]["capture_end"])
+    if new_end <= old_end:
+        return
+    if ev["state"]["live_done"] and new_end > now and any(not c["archive"] for c in ev["cameras"]):
+        ev["state"]["live_done"] = False
+        print(f"  ~ {ev['event_id']}: window extended to {iso(new_end)}, live capture reopened")
+    if ev["state"]["backfill_done"] and any(c["archive"] for c in ev["cameras"]):
+        ev["state"]["backfill_done"] = False
+
+
 def overlaps(ev, kind, htf_id, s, e):
     if ev["kind"] != kind or ev["htf_id"] != htf_id:
         return False
@@ -137,7 +151,9 @@ def main():
                 w["start"] = iso(min(parse_time(w["start"]), start))
                 w["end"] = iso(max(parse_time(w["end"]), end))
                 w["capture_start"] = iso(min(parse_time(w["capture_start"]), s))
-                w["capture_end"] = iso(max(parse_time(w["capture_end"]), e))
+                old_end = parse_time(w["capture_end"])
+                w["capture_end"] = iso(max(old_end, e))
+                reopen(ev, old_end, now)
                 add_new_cameras(ev, entry)
                 return ev
         cams = cameras_near(entry["lat"], entry["lon"])
