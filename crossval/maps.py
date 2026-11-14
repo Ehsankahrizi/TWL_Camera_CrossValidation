@@ -141,32 +141,11 @@ CHART_STYLE = {
     "legend.fontsize": 12, "grid.linewidth": 0.6,
 }
 
-MISSED_STYLE = {   # reason → (flag title, why, colour)
-    "offline": ("Camera offline", "agency sent its 'no live feed' image", "#b91c1c"),
-    "no_image": ("No image", "camera did not respond", "#ea580c"),
-    "frozen": ("Camera frozen", "same picture every time", "#6b7280"),
+MISSED_STYLE = {   # reason → (legend text, why, line style); all drawn as grey lines
+    "offline": ("camera offline", "agency sent its 'no live feed' image", "-"),
+    "no_image": ("camera did not respond", "HTTP error, timeout or not an image", ":"),
+    "frozen": ("same picture as before", "frozen camera", "--"),
 }
-SLOT_GAP_MIN = 20                    # missed slots this close together form one period
-
-
-def missed_periods(missed):
-    """{reason: [datetimes]} → [(reason, start, end)]: runs of consecutive missed slots,
-    each lasting until the next 15-min slot."""
-    from datetime import timedelta
-    step = timedelta(minutes=config.LIVE_CAPTURE_INTERVAL_MIN)
-    out = []
-    for reason, ts in (missed or {}).items():
-        ts = sorted(ts)
-        start = prev = None
-        for t in ts:
-            if prev is not None and t - prev > timedelta(minutes=SLOT_GAP_MIN):
-                out.append((reason, start, prev + step))
-                start = None
-            start = start or t
-            prev = t
-        if start:
-            out.append((reason, start, prev + step))
-    return sorted(out, key=lambda x: x[1])
 
 
 def missed_times(ev, camera_id):
@@ -233,22 +212,12 @@ def chart(ev, cam, image_times, width, height, missed=None):
             ax.annotate(f"{len(times)} images: {fmt(times[0])}–{fmt(times[-1])}", (times[len(times) // 2], top),
                         xytext=(0, 10), textcoords="offset points", ha="center", fontsize=11, fontweight="bold",
                         color="#15803d", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#15803d", lw=1))
-    # Periods without images: hatched band + a flag saying why
-    import matplotlib.transforms as mtransforms
-    xy = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)    # x in time, y in axes fraction
-    all_x = [to_dt(p["t"]) for f in runs for p in f["series_ft_mhhw"]] + list(times)
-    x_span = (max(all_x) - min(all_x)).total_seconds() if len(all_x) > 1 else 1
-    labelled = set()
-    for reason, a, b in missed_periods(missed):
-        title, why, color = MISSED_STYLE.get(reason, (reason, "", "#6b7280"))
-        ax.axvspan(a, b, facecolor="none", hatch="///", edgecolor=color, alpha=0.35, lw=0,
-                   label=f"No images ({title.lower()})" if reason not in labelled else None)
-        labelled.add(reason)
-        ax.plot([a, a], [0.76, 0.94], color=color, lw=2, transform=xy)                  # small flag:
-        ax.plot([a], [0.905], marker=">", ms=12, color=color, transform=xy, markeredgewidth=0)               # pole + pennant
-        if (b - a).total_seconds() > 0.06 * x_span:
-            ax.text(a, 0.905, "    " + title.split()[-1].capitalize(), transform=xy, ha="left", va="center",
-                    fontsize=11, fontweight="bold", color=color)
+    # Slots without an image: a grey line where an image would have been, styled by reason
+    for reason, (title, why, ls) in MISSED_STYLE.items():
+        ts = sorted((missed or {}).get(reason, []))
+        for i, t in enumerate(ts):
+            ax.axvline(t, color="#9ca3af", lw=1.5, ls=ls, alpha=0.9, zorder=1,
+                       label=f"No image: {title} (n = {len(ts)})" if i == 0 else None)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")

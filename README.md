@@ -177,7 +177,7 @@ For traffic cameras, both the video frame and the agency snapshot are fetched, a
 
 ### Missed slots (`missed[]`) and offline cameras
 
-When a live camera gives no new frame in a 15-min slot, `missed[]` records it (`camera_id`, `time`, `time_local`, `reason`), and `map.png` hatches each period without images and puts a small flag with the reason ("Offline", "Frozen", "No image") at its start:
+When a live camera gives no new frame in a 15-min slot, `missed[]` records it (`camera_id`, `time`, `time_local`, `reason`), and `map.png` draws a grey vertical line at each such slot, where an image would have been (solid: camera offline, dotted: no response, dashed: same picture as before):
 
 | `reason` | Meaning |
 |---|---|
