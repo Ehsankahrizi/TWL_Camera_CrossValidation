@@ -212,11 +212,11 @@ def chart(ev, cam, image_times, width, height, missed=None):
             ax.annotate(f"{len(times)} images: {fmt(times[0])}–{fmt(times[-1])}", (times[len(times) // 2], top),
                         xytext=(0, 10), textcoords="offset points", ha="center", fontsize=11, fontweight="bold",
                         color="#15803d", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#15803d", lw=1))
-    # Slots without an image: a grey line where an image would have been, styled by reason
+    # Slots without an image: a dark slate line (unlike the light-grey earlier runs) where an image would have been, styled by reason
     for reason, (title, why, ls) in MISSED_STYLE.items():
         ts = sorted((missed or {}).get(reason, []))
         for i, t in enumerate(ts):
-            ax.axvline(t, color="#9ca3af", lw=1.5, ls=ls, alpha=0.9, zorder=1,
+            ax.axvline(t, color="#334155", lw=1.3, ls=ls, alpha=0.75, zorder=1,
                        label=f"No image: {title} (n = {len(ts)})" if i == 0 else None)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
