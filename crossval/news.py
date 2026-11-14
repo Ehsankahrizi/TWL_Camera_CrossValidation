@@ -29,7 +29,7 @@ from datetime import timedelta
 from email.utils import parsedate_to_datetime
 
 from . import config, util
-from .util import http_get, http_json, iso, local_iso, parse_time, read_json, utcnow, write_json
+from .util import event_date, http_get, http_json, iso, local_iso, parse_time, read_json, utcnow, write_json
 
 GNEWS = "https://news.google.com/rss/search"
 CENSUS = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
@@ -59,7 +59,7 @@ _places = {}                            # (lat, lon) -> place dict; the runner p
 
 
 def news_path(ev):
-    return config.STATE_ROOT / "news" / ev["window"]["start"][:10] / ev["event_id"] / "news.json"
+    return config.STATE_ROOT / "news" / event_date(ev) / ev["event_id"] / "news.json"
 
 
 def place_of(lat, lon):

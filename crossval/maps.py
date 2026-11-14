@@ -16,7 +16,7 @@ import json
 import math
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -174,23 +174,40 @@ def chart(ev, cam, image_times, width, height, missed=None):
     thr = ev["threshold_ft_mhhw"]
     plt.rcParams.update(CHART_STYLE)
     fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
-    runs = [f for f in ev["forecasts"] if f.get("series_ft_mhhw")]
-    for f in runs[:-1]:                                                 # earlier runs, faint
+    runs = sorted((f for f in ev["forecasts"] if f.get("series_ft_mhhw")), key=lambda f: f.get("pipeline_run") or "")
+    w = ev["window"]
+    # x range: the event's capture window with a little context, not every hour of every run
+    x0, x1 = to_dt(w["capture_start"]) - timedelta(hours=6), to_dt(w["capture_end"]) + timedelta(hours=2)
+    for f in runs:                                                      # every run, faint
         s = f["series_ft_mhhw"]
         ax.plot([to_dt(p["t"]) for p in s], [p["v"] for p in s], color="0.6", lw=1, alpha=0.6,
-                label="Earlier forecast runs" if f is runs[0] else None)
+                label="Individual forecast runs" if f is runs[0] else None)
     if runs:
-        s = runs[-1]["series_ft_mhhw"]
-        t, v = [to_dt(p["t"]) for p in s], [p["v"] for p in s]
+        # Main line: for each hour, the newest run issued before that hour (what the
+        # forecast said at the time). A window extended by later runs is then drawn with
+        # the runs that extended it, so the line, the HTF period and the images match.
+        best = {}
+        for f in runs:
+            issued = to_dt(f["pipeline_run"]) if f.get("pipeline_run") else None
+            for p in f["series_ft_mhhw"]:
+                t = to_dt(p["t"])
+                if t not in best or issued is None or issued <= t:
+                    best[t] = p["v"]
+        t = sorted(x for x in best if x0 <= x <= x1)
+        v = [best[x] for x in t]
         ax.fill_between(t, v, thr, where=[x >= thr for x in v], interpolate=True, color="#dc2626", alpha=0.35,
                         label="Forecast above threshold")
-        ax.plot(t, v, color="#2563eb", lw=2.6, marker="o", ms=5, label="Mean NWM TWL forecast (latest run)")
-    w = ev["window"]
-    ax.axvspan(to_dt(w["start"]), to_dt(w["end"]) if w["end"] != w["start"] else to_dt(w["end"]) + (to_dt(w["end"]) - to_dt(w["start"])),
-               color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
+        ax.plot(t, v, color="#2563eb", lw=2.6, marker="o", ms=5,
+                label="Mean NWM TWL forecast (newest run at each hour)")
+    # HTF period: the hours forecast at/above threshold. A one-hour period (start == end)
+    # is drawn ±30 min around that hour, or it would have no width.
+    p0, p1 = to_dt(w["start"]), to_dt(w["end"])
+    if p1 <= p0:
+        p0, p1 = p0 - timedelta(minutes=30), p1 + timedelta(minutes=30)
+    ax.axvspan(p0, p1, color="#f59e0b", alpha=0.15, label="HTF period (forecast ≥ threshold)")
     ax.axhline(thr, color="#9333ea", ls="--", lw=2.2, label=f"HTF threshold ({thr:.2f} ft)")
     # y range from every plotted value and the threshold (explicit, so nothing is clipped)
-    vals = [p["v"] for f in runs for p in f["series_ft_mhhw"]] + [thr]
+    vals = [p["v"] for f in runs for p in f["series_ft_mhhw"] if x0 <= to_dt(p["t"]) <= x1] + [thr]
     lo, hi = min(vals), max(vals)
     pad = max(0.1, (hi - lo) * 0.12)
     ax.set_ylim(lo - pad, hi + pad * 1.6)
@@ -201,7 +218,7 @@ def chart(ev, cam, image_times, width, height, missed=None):
     if times:
         top = hi + pad * 1.6
         ax.plot(times, [top] * len(times), "v", color="#15803d", ms=10, clip_on=False)
-        xs = [to_dt(p["t"]) for f in runs for p in f["series_ft_mhhw"]] + times
+        xs = [x0, x1] + times
         span = (max(xs) - min(xs)).total_seconds() or 1
         gaps = [(b - a).total_seconds() for a, b in zip(times, times[1:])]
         if len(times) <= 4 and all(g > span / 10 for g in gaps):   # few, well apart: label each
@@ -218,15 +235,17 @@ def chart(ev, cam, image_times, width, height, missed=None):
         for i, t in enumerate(ts):
             ax.axvline(t, color="#334155", lw=1.0, ls=ls, alpha=0.8, zorder=1,
                        label=f"No image: {title} (n = {len(ts)})" if i == 0 else None)
+    ax.set_xlim(min([x0] + times), max([x1] + times))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
     ax.set_ylabel("TWL (ft above MHHW)")
-    run = runs[-1].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
+    first = runs[0].get("nwm_creation_time", "")[:16].replace("T", " ") if runs else ""
+    run = f"run {first} UTC" if len(runs) == 1 else f"{len(runs)} runs"
     n_st = len(ev.get("nwm_stations") or [])
     ax.set_title(f"(b) NWM total water level forecast at HTF point {ev['htf_id']}", loc="left",
                  pad=30 if times else 12)
-    ax.set_title(f"NWM run {run} UTC · mean of {n_st} station{'s' if n_st != 1 else ''} ≤ 5 km", loc="right",
+    ax.set_title(f"NWM {run} · mean of {n_st} station{'s' if n_st != 1 else ''} ≤ 5 km", loc="right",
                  fontsize=11, fontweight="normal", color="0.3", pad=30 if times else 12)
     ax.grid(alpha=0.35)
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=3, frameon=False,
@@ -359,9 +378,17 @@ def main():
             out = folder / "map.png"
             if not cam or not (args.force or not out.exists()):
                 continue
-            times = {datetime.fromisoformat(re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00+00:00", f.stem))
-                     for f in folder.glob("*.jpg")}
-            if render(ev, cam, out, sorted(times), missed_times(ev, cam["id"])):
+            # Frames saved before 2026-11-14 may be an agency "camera offline" picture:
+            # draw those as offline slots, not as images.
+            placeholder = {Path(c["file"]).name for c in ev.get("captures", [])
+                           if c["camera_id"] == cam["id"] and c.get("sha1") in config.PLACEHOLDER_SHA1}
+            stamp_time = lambda f: datetime.fromisoformat(re.sub(r"T(\d\d)-(\d\d)Z$", r"T\1:\2:00+00:00", f.stem))
+            times = {stamp_time(f) for f in folder.glob("*.jpg") if f.name not in placeholder}
+            missed = missed_times(ev, cam["id"])
+            off = [stamp_time(f) for f in folder.glob("*.jpg") if f.name in placeholder]
+            if off:
+                missed.setdefault("offline", []).extend(off)
+            if render(ev, cam, out, sorted(times), missed):
                 made += 1
     print(f"drew {made} maps")
 

@@ -16,7 +16,7 @@ from datetime import timedelta
 
 from . import config
 from .sources import cameras_near
-from .util import add_local_window, http_json, iso, parse_time, read_json, utcnow, write_json
+from .util import add_local_window, event_date, http_json, iso, parse_time, read_json, utcnow, write_json
 
 FT_PER_M = 3.280839895
 MERGE_GAP = timedelta(hours=3)      # hours at/above threshold this close belong to the same high tide
@@ -69,7 +69,7 @@ def forecast_record(entry, meta, peak_t, peak, n_hours):
 
 
 def event_path(event):
-    return config.EVENTS_DIR / event["window"]["start"][:10] / event["event_id"] / "event.json"
+    return config.EVENTS_DIR / event_date(event) / event["event_id"] / "event.json"
 
 
 def new_event(kind, entry, start, end, pad_min, cams):

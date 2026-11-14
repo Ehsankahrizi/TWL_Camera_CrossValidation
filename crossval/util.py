@@ -90,6 +90,15 @@ def local_iso(dt, tz_name):
         return None
 
 
+def event_date(ev):
+    """Date folder of an event (YYYY-MM-DD), fixed for its whole life: the date in its
+    event_id (the window start when it was first planned). A later forecast can move the
+    window start to the day before; the folder must not move with it, or the event is
+    split over two folders (it happened to HTF0901 on 10 Oct and HTF0510 on 8 Nov)."""
+    eid = ev["event_id"]
+    return f"{eid[:4]}-{eid[4:6]}-{eid[6:8]}"
+
+
 def add_local_window(ev):
     """window.*_local: the UTC window bounds in the HTF point's own time zone."""
     w = ev["window"]

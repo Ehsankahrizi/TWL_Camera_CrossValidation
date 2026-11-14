@@ -36,7 +36,7 @@ from pathlib import Path
 
 from . import config
 from .sources import WEBCOOS_API, windy_current_image
-from .util import (add_local_window, http_date, http_get, http_json, image_pixels, iso, local_iso, parse_time, read_json,
+from .util import (add_local_window, event_date, http_date, http_get, http_json, image_pixels, iso, local_iso, parse_time, read_json,
                    save_image, stamp, utcnow, write_json)
 
 GIVE_UP_AFTER = timedelta(days=3)       # stop trying to backfill an event after this
@@ -50,7 +50,7 @@ def safe(name):
 
 
 def frame_path(ev, cam, t):
-    return (Path(ev["window"]["start"][:10]) / ev["event_id"] / f"{cam['source']}_{safe(cam['id'])}" / f"{stamp(t)}.jpg")
+    return (Path(event_date(ev)) / ev["event_id"] / f"{cam['source']}_{safe(cam['id'])}" / f"{stamp(t)}.jpg")
 
 
 def ensure_map(ev, cam, rel):
