@@ -241,15 +241,14 @@ def chart(ev, cam, image_times, width, height, missed=None):
     labelled = set()
     for reason, a, b in missed_periods(missed):
         title, why, color = MISSED_STYLE.get(reason, (reason, "", "#6b7280"))
-        ax.axvspan(a, b, facecolor=color, alpha=0.08, hatch="///", edgecolor=color, lw=0,
-                   label=f"No images: {title.lower()}" if reason not in labelled else None)
+        ax.axvspan(a, b, facecolor="none", hatch="///", edgecolor=color, alpha=0.35, lw=0,
+                   label=f"No images ({title.lower()})" if reason not in labelled else None)
         labelled.add(reason)
-        ax.plot([a, a], [0, 0.30], color=color, lw=2, transform=xy, clip_on=False)            # flag pole
-        ax.plot([a], [0.30], marker=">", ms=13, color=color, transform=xy, clip_on=False)      # flag
-        if (b - a).total_seconds() > 0.10 * x_span:                                          # room for the reason
-            ax.text(a + (b - a) / 2, 0.06, f"NO IMAGES {fmt(a)}–{fmt(b)}\n{title}: {why}", transform=xy,
-                    ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=color, zorder=5,
-                    bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=color, lw=1.4, alpha=0.95))
+        ax.plot([a, a], [0.76, 0.94], color=color, lw=2, transform=xy)                  # small flag:
+        ax.plot([a], [0.905], marker=">", ms=12, color=color, transform=xy, markeredgewidth=0)               # pole + pennant
+        if (b - a).total_seconds() > 0.06 * x_span:
+            ax.text(a, 0.905, "    " + title.split()[-1].capitalize(), transform=xy, ha="left", va="center",
+                    fontsize=11, fontweight="bold", color=color)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
     ax.set_xlabel(f"Time ({zone}, local to the HTF point)")
