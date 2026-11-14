@@ -31,7 +31,7 @@ flowchart TD
             R1["NWS Local Storm Reports (IEM):<br/>flood reports ≤ 20 km, window −3 h … +6 h<br/>re-checked until 42 h after the window"]
             R2["Google News: town/county + state + flood words,<br/>published day −1 … day +2; headlines scored by keywords"]
         end
-        subgraph CAP["② Capture — every 15 min (:00 :15 :30 :45)"]
+        subgraph CAP["② Capture — every 30 min (:00 :30)"]
             C1{"Window open now?"}
             C2["Live cameras (traffic, Windy):<br/>video frame (ffmpeg) or snapshot, larger kept;<br/>record image time, age, stale;<br/>skip frozen and offline images, log missed slots"]
             C3{"Window closed ≥ 60 min ago?"}
@@ -177,7 +177,7 @@ For traffic cameras, both the video frame and the agency snapshot are fetched, a
 
 ### Missed slots (`missed[]`) and offline cameras
 
-When a live camera gives no new frame in a 15-min slot, `missed[]` records it (`camera_id`, `time`, `time_local`, `reason`), and `map.png` draws a dark slate-grey vertical line at each such slot, where an image would have been (solid: camera offline, dotted: no response, dashed: same picture as before):
+When a live camera gives no new frame in a capture slot (every 30 min), `missed[]` records it (`camera_id`, `time`, `time_local`, `reason`), and `map.png` draws a thin dark slate-grey vertical line at each such slot, where an image would have been (dashed: camera offline, dotted: no response, dash-dot: same picture as before):
 
 | `reason` | Meaning |
 |---|---|
@@ -435,8 +435,8 @@ All tunable values are in `crossval/config.py`:
 | Camera radius | 5 km |
 | Nearest traffic cameras per event | 5 |
 | Window padding | 30 min |
-| Live capture interval | 15 min |
-| Archive frame spacing | 15 min |
+| Live capture interval | 30 min (15 min until 2026-11-14) |
+| Archive frame spacing | 30 min (15 min until 2026-11-14) |
 | Stale threshold | 30 min |
 | Control events per forecast run | 0 (off; env `CONTROL_MAX_PER_RUN`) |
 | Image width | ≤ 1920 px |

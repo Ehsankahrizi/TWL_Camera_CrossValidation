@@ -5,7 +5,7 @@ with the distance, a legend, a scale bar and a north arrow, on an Esri street ba
 (Pillow, web-mercator tiles). Bottom panel (same width, wide and short): the mean NWM TWL forecast for the HTF point
 (ft above MHHW) with the threshold, the part above it shaded as in the iOS app, the
 HTF period, earlier forecast runs, a marker at every image this camera captured, and
-a mark at every 15-min slot with no new image (camera offline / no image / unchanged).
+a dashed line at every capture slot with no new image (camera offline / no image / unchanged).
 
 Usage (existing folders):  python -m crossval.maps --events "<folder with <date>/<event_id>/event.json>"
 """
@@ -141,10 +141,10 @@ CHART_STYLE = {
     "legend.fontsize": 12, "grid.linewidth": 0.6,
 }
 
-MISSED_STYLE = {   # reason → (legend text, why, line style); all drawn as grey lines
-    "offline": ("camera offline", "agency sent its 'no live feed' image", "-"),
-    "no_image": ("camera did not respond", "HTTP error, timeout or not an image", ":"),
-    "frozen": ("same picture as before", "frozen camera", "--"),
+MISSED_STYLE = {   # reason → (legend text, why, line style); all drawn as dark slate lines
+    "offline": ("camera offline", "agency sent its 'no live feed' image", (0, (4, 3))),       # dashed
+    "no_image": ("camera did not respond", "HTTP error, timeout or not an image", (0, (1, 2))),  # dotted
+    "frozen": ("same picture as before", "frozen camera", (0, (6, 2, 1, 2))),                    # dash-dot
 }
 
 
@@ -216,7 +216,7 @@ def chart(ev, cam, image_times, width, height, missed=None):
     for reason, (title, why, ls) in MISSED_STYLE.items():
         ts = sorted((missed or {}).get(reason, []))
         for i, t in enumerate(ts):
-            ax.axvline(t, color="#334155", lw=1.3, ls=ls, alpha=0.75, zorder=1,
+            ax.axvline(t, color="#334155", lw=1.0, ls=ls, alpha=0.8, zorder=1,
                        label=f"No image: {title} (n = {len(ts)})" if i == 0 else None)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d\n%H:%M", tz=tz))
     zone = to_dt(w["start"]).astimezone(tz).strftime("%Z") if tz else "UTC"   # EDT/EST of the event, not of today
@@ -277,7 +277,6 @@ def render(ev, cam, out_path, image_times=None, missed=None):
     d.text((16, 42), sub, font=font(18), fill=(60, 60, 60))
 
     # legend
-    lx, ly = 16, 92
     items = [
         ("htf", f"HTF point {ev['htf_id']}  ({lat:.4f}, {lon:.4f})",
          f"threshold {ev['threshold_ft_mhhw']:.2f} ft ({ev['threshold_m_mhhw']:.3f} m) above MHHW"),
@@ -286,7 +285,18 @@ def render(ev, cam, out_path, image_times=None, missed=None):
         ("line", f"Distance from HTF point to camera: {dist}", None),
     ]
     box_h = 22 + sum(52 if s else 34 for _, _, s in items)
-    d.rounded_rectangle([lx, ly, lx + 600, ly + box_h], 8, fill=(255, 255, 255, 242), outline=(120, 120, 120), width=2)
+    box_w = 54 + 20 + max(max(d.textlength(t, font=font(19, bold=True)), d.textlength(s or "", font=font(16)))
+                          for _, t, s in items)
+    # Put the legend in the corner where it hides the least: the HTF point, the camera
+    # and the distance label count most, the line between them a little.
+    keep = [(hp, 10), (cp, 10), (mid, 6)] + [((hp[0] + (cp[0] - hp[0]) * k / 12, hp[1] + (cp[1] - hp[1]) * k / 12), 1)
+                                             for k in range(1, 12)]
+    corners = [(16, 92), (W - 16 - box_w, 150),                 # top-left; top-right below the north arrow
+               (16, H - 30 - box_h), (W - 16 - box_w, H - 110 - box_h)]   # bottom-left; bottom-right above the scale bar
+    def hidden(c, m=14):
+        return sum(wt for (x, y), wt in keep if c[0] - m <= x <= c[0] + box_w + m and c[1] - m <= y <= c[1] + box_h + m)
+    lx, ly = min(corners, key=hidden)                           # ties: earlier corner wins
+    d.rounded_rectangle([lx, ly, lx + box_w, ly + box_h], 8, fill=(255, 255, 255, 242), outline=(120, 120, 120), width=2)
     y = ly + 14
     for kind, text, sub_text in items:
         sym = (lx + 26, y + 11)

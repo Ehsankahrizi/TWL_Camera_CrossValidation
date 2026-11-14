@@ -1,6 +1,6 @@
 """Capture camera frames for planned events.
 
-Live capture (runs every 15 min): for events whose capture window contains "now",
+Live capture (runs every 30 min, config.LIVE_CAPTURE_INTERVAL_MIN): for events whose capture window contains "now",
 grab one frame from each live-only camera (traffic, Windy). For traffic cameras
 with an HLS stream, a frame is pulled from the video with ffmpeg (truly current);
 otherwise, or if that fails, the agency snapshot image is saved.

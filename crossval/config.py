@@ -19,10 +19,10 @@ MAX_WINDY_CAMERAS = 3
 # Forecasts are hourly. An event's window runs from the first to the last hour at or
 # above the threshold, padded on both sides so the rise and fall are recorded too.
 WINDOW_PAD_MIN = 30
-LIVE_CAPTURE_INTERVAL_MIN = 15          # capture workflow cadence (cron */15)
+LIVE_CAPTURE_INTERVAL_MIN = 30          # live capture cadence: :00 and :30 (was 15 until 2026-11-14)
 STALE_AFTER_MIN = 30                    # a live frame whose image is older than this is flagged stale
 BACKFILL_DELAY_MIN = 60                 # wait this long after a window closes before pulling archives
-ARCHIVE_FRAME_STEP_MIN = 15             # keep at most one archived frame per this many minutes
+ARCHIVE_FRAME_STEP_MIN = 30             # keep at most one archived frame per this many minutes
 
 # ── Control cases (forecast BELOW threshold) ──
 # Off by default: only forecast exceedance periods are captured. Set to e.g. 15 to also
