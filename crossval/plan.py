@@ -252,7 +252,7 @@ def main():
     n_exc = 0
     for entry in fc.values():
         for start, end, peak_t, peak, n in tide_windows(entry):
-            if upsert("exceedance", entry, start, end, config.WINDOW_PAD_MIN,
+            if upsert("exceedance", entry, start, end, config.CONTEXT_HOURS * 60,      # capture incl. context
                       forecast_record(entry, meta, peak_t, peak, n)):
                 n_exc += 1
 

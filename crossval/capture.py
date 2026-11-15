@@ -3,7 +3,9 @@
 Live capture (runs every 30 min, config.LIVE_CAPTURE_INTERVAL_MIN): for events whose capture window contains "now",
 grab one frame from each live-only camera (traffic, Windy). For traffic cameras
 with an HLS stream, a frame is pulled from the video with ffmpeg (truly current);
-otherwise, or if that fails, the agency snapshot image is saved.
+otherwise, or if that fails, the agency snapshot image is saved. Exceedance events are
+also captured config.CONTEXT_HOURS before and after the HTF period, hourly (on the hour),
+because the flooding seen on camera can come before or after the forecast peak.
 
 Archive backfill: once a window has been closed for BACKFILL_DELAY_MIN, the frames
 recorded during the window are downloaded from the USGS HIVIS (and WebCOOS) archives.
@@ -90,6 +92,15 @@ def record(ev, cam, t, rel, method, size, image_time, basis, digest):
         "file": str(rel), "artifact": ARTIFACT, "size": list(size)})
 
 
+def in_core(ev, t):
+    """True inside the padded HTF period (captured every LIVE_CAPTURE_INTERVAL_MIN); False in
+    the hourly context hours before/after it (exceedance events only, config.CONTEXT_HOURS)."""
+    if ev.get("kind") != "exceedance":
+        return True
+    pad = timedelta(minutes=config.WINDOW_PAD_MIN)
+    return parse_time(ev["window"]["start"]) - pad <= t <= parse_time(ev["window"]["end"]) + pad
+
+
 def note_missed(ev, cam, t, reason):
     """Record a live slot in which this camera gave no new frame (see module docstring)."""
     ev.setdefault("missed", []).append({"source": cam["source"], "camera_id": cam["id"], "time": iso(t),
@@ -128,6 +139,9 @@ def hls_frame(url):
 def capture_live(ev, now):
     """Grab one frame per live camera. Returns (frames saved, missed slots recorded)."""
     got = missed = 0
+    core = in_core(ev, now)
+    if not core and now.minute >= 15:        # context hours: only the on-the-hour slot
+        return 0, 0
     min_gap = timedelta(minutes=config.LIVE_CAPTURE_INTERVAL_MIN - 5)
     for cam in ev["cameras"]:
         if cam["archive"]:
@@ -238,7 +252,15 @@ def backfill(ev):
             continue
         frames = usgs_frames(cam, start, end) if cam["source"] == "usgs" else webcoos_frames(cam, start, end)
         have = {c["time"] for c in ev["captures"] if c["camera_id"] == cam["id"]}
-        for t, url in thin(frames, config.ARCHIVE_FRAME_STEP_MIN):
+        # every ARCHIVE_FRAME_STEP_MIN in the HTF period, hourly (nearest the hour) in the context hours
+        core = [f for f in frames if in_core(ev, f[0])]
+        ctx = [f for f in frames if not in_core(ev, f[0])]
+        hourly = {}
+        for f in ctx:
+            h = f[0].replace(minute=0, second=0, microsecond=0) + timedelta(hours=f[0].minute >= 30)
+            if h not in hourly or abs(f[0] - h) < abs(hourly[h][0] - h):
+                hourly[h] = f
+        for t, url in sorted(thin(core, config.ARCHIVE_FRAME_STEP_MIN) + list(hourly.values()), key=lambda f: f[0]):
             if iso(t) in have:
                 continue
             data = fetch_bytes(url)
