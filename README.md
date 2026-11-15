@@ -181,7 +181,8 @@ For traffic cameras, both the video frame and the agency snapshot are fetched, a
 
 1. **Peaks:** hours at/above the threshold that are the highest value within ±5 h. Two peaks less than 6 h apart are one tide, and the higher one is kept.
 2. **Boundaries:** consecutive peaks are separated at the lowest hour between them, even when that hour is still above the threshold (a surge).
-3. **Window:** from the tide's first to its last hour at/above the threshold, padded by 30 min for capture.
+3. **Window:** from the tide's first to its last hour at/above the threshold (the *HTF period*).
+4. **Capture:** every 30 min from 30 min before to 30 min after the HTF period. On top of that, **hourly (on the hour) for 2 h before and 2 h after it** (`CONTEXT_HOURS`), because real flooding can come before or after the forecast peak. Archive cameras (USGS, WebCOOS) are thinned the same way. For example, an HTF period of 12:00–14:00 gets images at 10:00, 11:00, 11:30, 12:00 … 14:30, 15:00 and 16:00. In those context hours only the on-the-hour slot is tried, so the half-hour slots there are not recorded as missed.
 
 A newer run updates the event whose peak is less than 6 h from its own (half a semi-diurnal cycle), choosing the nearest when several qualify. The window then grows to cover both runs, and capture reopens if needed. A peak at the edge of a run's 18 h series may be only a rising or falling tide, so it is *provisional* (`tide_peak_seen: false`): it also matches an event whose hours above the threshold overlap, and it is replaced by the first run that sees ±5 h around the peak. After that the peak is fixed, so a slow surge cannot drift one event across several tides. Two tides of one run never update the same event.
 
@@ -447,8 +448,8 @@ All tunable values are in `crossval/config.py`:
 | Camera radius | 5 km |
 | Nearest traffic cameras per event | 5 |
 | Window padding | 30 min |
-| Live capture interval | 30 min (15 min until 2026-11-14) |
-| Archive frame spacing | 30 min (15 min until 2026-11-14) |
+| Live capture interval | 30 min in the HTF period ± 30 min; hourly for 2 h before and after (since 2026-11-15) |
+| Archive frame spacing | same as live: 30 min, hourly in the 2 context hours |
 | Stale threshold | 30 min |
 | Control events per forecast run | 0 (off; env `CONTROL_MAX_PER_RUN`) |
 | Image width | ≤ 1920 px |

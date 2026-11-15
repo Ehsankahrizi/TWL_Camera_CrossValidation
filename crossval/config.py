@@ -19,6 +19,10 @@ MAX_WINDY_CAMERAS = 3
 # Forecasts are hourly. An event's window runs from the first to the last hour at or
 # above the threshold, padded on both sides so the rise and fall are recorded too.
 WINDOW_PAD_MIN = 30
+# Context: flooding can come before or after the forecast peak, so exceedance events are
+# also captured CONTEXT_HOURS before and after the HTF period, but only hourly (on the
+# hour) to keep the number of images down. Inside the padded HTF period: every 30 min.
+CONTEXT_HOURS = 2
 LIVE_CAPTURE_INTERVAL_MIN = 30          # live capture cadence: :00 and :30 (was 15 until 2026-11-14)
 STALE_AFTER_MIN = 30                    # a live frame whose image is older than this is flagged stale
 BACKFILL_DELAY_MIN = 60                 # wait this long after a window closes before pulling archives
