@@ -2,7 +2,7 @@
 
 This repo automatically collects **camera evidence for every high tide flooding (HTF) forecast** made by the [Coastal HTF Forecast](https://github.com/Ehsankahrizi/coastal-twl-app) pipeline and iOS app. The images can then be used to check whether the forecasts were right.
 
-- **Exceedance events:** whenever the app forecasts that the total water level (TWL) at an HTF point will reach its threshold, this repo finds cameras within **5 km** of that point. It records frames from them during the forecast window.
+- **Exceedance events:** whenever the app forecasts that the total water level (TWL) at an HTF point will reach its threshold, this repo finds cameras within **5 km** of that point. It records frames from them during the forecast window. **One event = one high tide** (since 2026-11-14): a surge that keeps the water above the threshold for days becomes one event per tidal peak, so a reviewer answers one question per tide.
 - **Control events (off by default):** a sample of points forecast to stay **below** their threshold can be recorded the same way (`CONTROL_MAX_PER_RUN`, e.g. `15`). Controls are what reveal *missed* floods. With them off, the evaluation measures hits and false alarms only.
 
 A reviewer marks each camera's frames in an Excel workbook (Yes / No / NaN / Invalid), and `tools/evaluate.py` turns the answers into forecast skill scores.
@@ -20,10 +20,10 @@ flowchart TD
 
     subgraph ECS["Amazon ECS service bil6-twl-camera-crossval · crossval/runner.py (always on)"]
         subgraph PLAN["① Plan — 01:50 / 07:50 / 13:50 / 19:50 UTC"]
-            P1["For each HTF point: hours with TWL ≥ threshold<br/>(runs < 3 h apart merged) → exceedance window"]
+            P1["For each HTF point: tidal peaks with TWL ≥ threshold<br/>(highest within ±5 h; split at the lowest hour between peaks)<br/>→ one exceedance window per high tide"]
             P2["Optional (off by default): sample points forecast BELOW threshold<br/>→ control window at forecast peak"]
             P3["Find cameras ≤ 5 km:<br/>traffic (Road511 + ALGO AL) · USGS HIVIS · Windy · WebCOOS*"]
-            P4["Same point + overlapping window already planned?<br/>→ update it, add new cameras, keep each run's forecast,<br/>reopen capture if the end moved later"]
+            P4["Same point + same high tide (peaks < 6 h apart) already planned?<br/>→ update it, add new cameras, keep each run's forecast,<br/>reopen capture if the end moved later"]
             P1 --> P3
             P2 --> P3 --> P4
         end
@@ -174,6 +174,18 @@ A frame's *fetch* time and the time the camera *took* the image can differ. For 
 | `file`, `artifact`, `size` | Where the JPEG is and its pixel size |
 
 For traffic cameras, both the video frame and the agency snapshot are fetched, and the larger image is kept. USGS archive frames are full resolution.
+
+### Event definition: one event per high tide
+
+`plan.tide_windows()` splits each forecast run's hourly series into high tides:
+
+1. **Peaks:** hours at/above the threshold that are the highest value within ±5 h. Two peaks less than 6 h apart are one tide, and the higher one is kept.
+2. **Boundaries:** consecutive peaks are separated at the lowest hour between them, even when that hour is still above the threshold (a surge).
+3. **Window:** from the tide's first to its last hour at/above the threshold, padded by 30 min for capture.
+
+A newer run updates the event whose peak is less than 6 h from its own (half a semi-diurnal cycle), choosing the nearest when several qualify. The window then grows to cover both runs, and capture reopens if needed. A peak at the edge of a run's 18 h series may be only a rising or falling tide, so it is *provisional* (`tide_peak_seen: false`): it also matches an event whose hours above the threshold overlap, and it is replaced by the first run that sees ±5 h around the peak. After that the peak is fixed, so a slow surge cannot drift one event across several tides. Two tides of one run never update the same event.
+
+Example, `HTF1176`, 24–27 Sep 2026: the forecast stayed above 1.72 ft for about 2 days. This used to be one 46 h event. It is now six events, one per high tide (24 Sep evening, 25 Sep morning and evening, 26 Sep morning and evening, 27 Sep). Replaying all 152 forecast runs up to 14 Nov gives 658 events instead of 642: median window 2 h, 95 % ≤ 8 h, no two events of one point on the same tide. In 3 flat Gulf/Outer Banks surges (HTF0507, HTF0587, HTF1230; no clear tide) neighbouring events share 1–5 h because the runs disagreed on the trough. Events planned before 2026-11-14 keep their old definition.
 
 ### Missed slots (`missed[]`) and offline cameras
 
