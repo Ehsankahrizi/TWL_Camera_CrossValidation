@@ -183,9 +183,9 @@ For traffic cameras, both the video frame and the agency snapshot are fetched, a
 2. **Boundaries:** consecutive peaks are separated at the lowest hour between them, even when that hour is still above the threshold (a surge).
 3. **Window:** from the tide's first to its last hour at/above the threshold, padded by 30 min for capture.
 
-A newer run updates the event whose peak is less than 6 h from its own (half a semi-diurnal cycle). The window then grows to cover both runs, and capture reopens if needed. The matching peak is updated only from runs that see ±5 h around it, because a peak at the edge of an 18 h series may be only a rising or falling tide.
+A newer run updates the event whose peak is less than 6 h from its own (half a semi-diurnal cycle), choosing the nearest when several qualify. The window then grows to cover both runs, and capture reopens if needed. A peak at the edge of a run's 18 h series may be only a rising or falling tide, so it is *provisional* (`tide_peak_seen: false`): it also matches an event whose hours above the threshold overlap, and it is replaced by the first run that sees ±5 h around the peak. After that the peak is fixed, so a slow surge cannot drift one event across several tides. Two tides of one run never update the same event.
 
-Example, `HTF1176`, 24–27 Sep 2026: the forecast stayed above 1.72 ft for about 2 days. This used to be one 46 h event. It is now six events, one per high tide (24 Sep evening, 25 Sep morning and evening, 26 Sep morning and evening, 27 Sep). Replaying all 152 forecast runs up to 14 Nov gives 663 events instead of 642, with a median window of 2 h. Events planned before 2026-11-14 keep their old definition.
+Example, `HTF1176`, 24–27 Sep 2026: the forecast stayed above 1.72 ft for about 2 days. This used to be one 46 h event. It is now six events, one per high tide (24 Sep evening, 25 Sep morning and evening, 26 Sep morning and evening, 27 Sep). Replaying all 152 forecast runs up to 14 Nov gives 658 events instead of 642: median window 2 h, 95 % ≤ 8 h, no two events of one point on the same tide. In 3 flat Gulf/Outer Banks surges (HTF0507, HTF0587, HTF1230; no clear tide) neighbouring events share 1–5 h because the runs disagreed on the trough. Events planned before 2026-11-14 keep their old definition.
 
 ### Missed slots (`missed[]`) and offline cameras
 

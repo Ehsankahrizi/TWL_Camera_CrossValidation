@@ -103,7 +103,8 @@ def peak_seen(entry, peak_t):
 
 
 def event_peak(ev):
-    """Peak time of an event's high tide: from the newest forecast that saw it."""
+    """Peak time of an event's high tide (tide_peak; for events planned before
+    2026-11-14, the newest forecast's peak)."""
     return parse_time(ev.get("tide_peak") or ev["forecasts"][-1]["peak_time"])
 
 
@@ -175,13 +176,21 @@ def reopen(ev, old_end, now):
         ev["state"]["backfill_done"] = False
 
 
-def same_event(ev, kind, htf_id, s, e, peak_t):
-    """Same HTF point and kind, and (exceedance) the same high tide: peaks less than
-    TIDE_MATCH apart; (control) overlapping windows."""
+def same_event(ev, kind, htf_id, s, e, peak_t=None, seen=True, start=None, end=None):
+    """Same HTF point and kind, and
+    exceedance: the same high tide. Peaks less than TIDE_MATCH apart; or, when either
+      peak is provisional (at the edge of a run's series, see peak_seen), the hours
+      at/above the threshold overlap.
+    control: overlapping capture windows."""
     if ev["kind"] != kind or ev["htf_id"] != htf_id:
         return False
     if kind == "exceedance" and ev.get("forecasts"):
-        return abs(event_peak(ev) - peak_t) < TIDE_MATCH
+        if abs(event_peak(ev) - peak_t) < TIDE_MATCH:
+            return True
+        if not (seen and ev.get("tide_peak_seen", True)):
+            w = ev["window"]
+            return parse_time(w["start"]) <= end and start <= parse_time(w["end"])
+        return False
     return parse_time(ev["window"]["capture_start"]) <= e and s <= parse_time(ev["window"]["capture_end"])
 
 
@@ -199,21 +208,32 @@ def main():
         if e < now - timedelta(hours=6):
             return None                                    # too old to capture anything
         peak_t = parse_time(rec["peak_time"])
-        for ev in events.values():
-            if same_event(ev, kind, int(entry["htfId"]), s, e, peak_t):
-                if not any(f["pipeline_run"] == run for f in ev["forecasts"]):
-                    ev["forecasts"].append(rec)
-                if kind == "exceedance" and peak_seen(entry, peak_t):
-                    ev["tide_peak"] = rec["peak_time"]     # newest fully seen peak, for matching the next run
-                w = ev["window"]
-                w["start"] = iso(min(parse_time(w["start"]), start))
-                w["end"] = iso(max(parse_time(w["end"]), end))
-                w["capture_start"] = iso(min(parse_time(w["capture_start"]), s))
-                old_end = parse_time(w["capture_end"])
-                w["capture_end"] = iso(max(old_end, e))
-                reopen(ev, old_end, now)
-                add_new_cameras(ev, entry)
-                return ev
+        seen = peak_seen(entry, peak_t)
+        # the best match: the same tide with the nearest peak
+        # (an event this run already updated with another tide is not matched again,
+        # so one run's two tides never merge into one event)
+        matches = [ev for ev in events.values()
+                   if same_event(ev, kind, int(entry["htfId"]), s, e, peak_t, seen, start, end)
+                   and not any(f["pipeline_run"] == run and f["peak_time"] != rec["peak_time"] for f in ev["forecasts"])]
+        if kind == "exceedance":
+            matches.sort(key=lambda ev: abs(event_peak(ev) - peak_t))
+        for ev in matches[:1]:
+            if not any(f["pipeline_run"] == run for f in ev["forecasts"]):
+                ev["forecasts"].append(rec)
+            if kind == "exceedance" and not ev.get("tide_peak_seen", True):
+                # The tide's peak is fixed once a run has seen it whole; until then the
+                # newest provisional peak is kept. A fixed anchor stops a slow surge from
+                # drifting one event across several tides, run after run.
+                ev["tide_peak"], ev["tide_peak_seen"] = rec["peak_time"], seen
+            w = ev["window"]
+            w["start"] = iso(min(parse_time(w["start"]), start))
+            w["end"] = iso(max(parse_time(w["end"]), end))
+            w["capture_start"] = iso(min(parse_time(w["capture_start"]), s))
+            old_end = parse_time(w["capture_end"])
+            w["capture_end"] = iso(max(old_end, e))
+            reopen(ev, old_end, now)
+            add_new_cameras(ev, entry)
+            return ev
         cams = cameras_near(entry["lat"], entry["lon"])
         if e < now:                                        # window over: only archives can still help
             cams = [c for c in cams if c["archive"]]
@@ -222,7 +242,7 @@ def main():
         ev = new_event(kind, entry, start, end, pad, cams)
         ev["forecasts"].append(rec)
         if kind == "exceedance":
-            ev["tide_peak"] = rec["peak_time"]
+            ev["tide_peak"], ev["tide_peak_seen"] = rec["peak_time"], seen
         events[ev["event_id"]] = ev
         print(f"  + {ev['event_id']}: {len(cams)} cameras "
               f"({', '.join(sorted({c['source'] for c in cams}))}), window {ev['window']['start']} → {ev['window']['end']}")
